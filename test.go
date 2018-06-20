@@ -17,6 +17,7 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/local"
+	"github.com/markkurossi/backup/storage"
 )
 
 func main() {
@@ -50,10 +51,11 @@ func main() {
 		}
 	} else {
 		for _, file := range flag.Args() {
-			err := local.Traverse(file, nil)
+			id, err := local.Traverse(file, storage.NewNull())
 			if err != nil {
 				log.Printf("%s\n", err)
 			}
+			fmt.Printf("Tree ID: %s\n", id)
 		}
 	}
 }

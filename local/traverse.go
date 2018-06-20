@@ -14,35 +14,42 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/storage"
+	"github.com/markkurossi/backup/tree"
 )
 
 const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |
 	os.ModeSocket | os.ModeCharDevice
 
-func Traverse(root string, writer storage.Writer) error {
+func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 	fi, err := os.Lstat(root)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mode := fi.Mode()
 	if (mode & SpecialMask) != 0 {
-		return nil
+		return nil, nil
 	}
 
 	if (mode & os.ModeDir) != 0 {
 		files, err := ioutil.ReadDir(root)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		for _, f := range files {
-			err = Traverse(fmt.Sprintf("%s/%s", root, f.Name()), writer)
+			id, err := Traverse(fmt.Sprintf("%s/%s", root, f.Name()), writer)
 			if err != nil {
-				return err
+				return nil, err
 			}
+			fmt.Printf("%s\t%s\n", id, f.Name())
 		}
 	} else {
-		fmt.Printf("%s\n", root)
+		// XXX Should do in 1MB chunks
+		data, err := ioutil.ReadFile(root)
+		if err != nil {
+			return nil, err
+		}
+		return writer.Write(data)
 	}
 
-	return nil
+	return nil, nil
 }
