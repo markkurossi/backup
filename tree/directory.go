@@ -16,12 +16,10 @@ func NewDirectory() *Directory {
 
 type Directory struct {
 	Type    Type
-	Count   int
 	Entries []DirectoryEntry
 }
 
 func (d *Directory) Serialize() ([]byte, error) {
-	d.Count = len(d.Entries)
 	return Marshal(d)
 }
 

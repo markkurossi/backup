@@ -30,6 +30,11 @@ func Marshal(v interface{}) ([]byte, error) {
 func marshalValue(out io.Writer, value reflect.Value) error {
 	var buf [8]byte
 
+	if !value.IsValid() {
+		fmt.Printf("Invalid value %v\n", value)
+		return nil
+	}
+
 	switch value.Type().Kind() {
 
 	case reflect.Uint8:
@@ -58,12 +63,12 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 		return err
 
 	case reflect.Slice:
+		binary.BigEndian.PutUint32(buf[:4], uint32(value.Len()))
+		_, err := out.Write(buf[:4])
+		if err != nil {
+			return err
+		}
 		if value.Type().Elem().Kind() == reflect.Uint8 {
-			binary.BigEndian.PutUint32(buf[:4], uint32(value.Len()))
-			_, err := out.Write(buf[:4])
-			if err != nil {
-				return err
-			}
 			_, err = out.Write(value.Bytes())
 			return err
 		} else {

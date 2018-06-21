@@ -9,10 +9,8 @@
 package local
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/markkurossi/backup/storage"
@@ -45,7 +43,16 @@ func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 			if err != nil {
 				return nil, err
 			}
-			fmt.Printf("%s\t%s\n", id, f.Name())
+			if id == nil {
+				// Unsupported file type.
+				continue
+			}
+
+			if f.IsDir() {
+				fmt.Printf("%s\t%s/\n", id, f.Name())
+			} else {
+				fmt.Printf("%s\t%s\n", id, f.Name())
+			}
 
 			dir.Add(f.Name(), uint32(f.Mode()), f.ModTime().Unix(), id)
 		}
@@ -54,7 +61,6 @@ func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("Dir:\n%s", hex.Dump(data))
 		return writer.Write(data)
 	} else {
 		// XXX Should do in 1MB chunks
@@ -71,7 +77,6 @@ func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("File:\n%s", hex.Dump(data))
 		return writer.Write(data)
 	}
 }
