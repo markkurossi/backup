@@ -8,6 +8,10 @@
 
 package tree
 
+import (
+	"github.com/markkurossi/backup/storage"
+)
+
 type ChunkedFile struct {
 	Type        Type
 	Version     Version
@@ -35,7 +39,7 @@ func (c *ChunkedFile) Size() int64 {
 	return c.ContentSize
 }
 
-func (c *ChunkedFile) Add(size int64, chunk *ID) {
+func (c *ChunkedFile) Add(size int64, chunk *storage.ID) {
 	c.Chunks = append(c.Chunks, Chunk{
 		Size:    size,
 		Content: chunk,
@@ -52,5 +56,5 @@ func NewChunkedFile(size int64) *ChunkedFile {
 
 type Chunk struct {
 	Size    int64
-	Content *ID
+	Content *storage.ID
 }

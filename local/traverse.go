@@ -21,7 +21,7 @@ import (
 const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |
 	os.ModeSocket | os.ModeCharDevice
 
-func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
+func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 	fileInfo, err := os.Lstat(root)
 	if err != nil {
 		return nil, err

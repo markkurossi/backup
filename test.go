@@ -16,7 +16,6 @@ import (
 	"github.com/markkurossi/backup/local"
 	"github.com/markkurossi/backup/remote"
 	"github.com/markkurossi/backup/storage"
-	"github.com/markkurossi/backup/tree"
 )
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 	}
 
 	if len(*list) > 0 {
-		id, err := tree.IDFromString(*list)
+		id, err := storage.IDFromString(*list)
 		if err != nil {
 			fmt.Printf("Invalid tree ID '%s': %s\n", *list, err)
 			return

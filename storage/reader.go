@@ -8,10 +8,6 @@
 
 package storage
 
-import (
-	"github.com/markkurossi/backup/tree"
-)
-
 type Reader interface {
-	Read(id *tree.ID) ([]byte, error)
+	Read(id *ID) ([]byte, error)
 }

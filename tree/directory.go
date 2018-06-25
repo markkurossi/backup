@@ -8,6 +8,10 @@
 
 package tree
 
+import (
+	"github.com/markkurossi/backup/storage"
+)
+
 type Directory struct {
 	Type    Type
 	Version Version
@@ -30,7 +34,8 @@ func (d *Directory) File() File {
 	panic("Directory can't be converted to File")
 }
 
-func (d *Directory) Add(name string, mode uint32, modTime int64, entry *ID) {
+func (d *Directory) Add(name string, mode uint32, modTime int64,
+	entry *storage.ID) {
 	d.Entries = append(d.Entries, DirectoryEntry{
 		Name:    name,
 		Mode:    mode,
@@ -50,5 +55,5 @@ type DirectoryEntry struct {
 	Name    string
 	Mode    uint32
 	ModTime int64
-	Entry   *ID
+	Entry   *storage.ID
 }

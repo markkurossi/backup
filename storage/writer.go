@@ -8,10 +8,6 @@
 
 package storage
 
-import (
-	"github.com/markkurossi/backup/tree"
-)
-
 type Writer interface {
-	Write(data []byte) (*tree.ID, error)
+	Write(data []byte) (*ID, error)
 }

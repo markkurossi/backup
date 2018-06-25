@@ -11,6 +11,8 @@ package tree
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/markkurossi/backup/storage"
 )
 
 type Element interface {
@@ -20,7 +22,11 @@ type Element interface {
 	File() File
 }
 
-func Deserialize(data []byte) (Element, error) {
+func Deserialize(id *storage.ID, reader storage.Reader) (Element, error) {
+	data, err := reader.Read(id)
+	if err != nil {
+		return nil, err
+	}
 	if len(data) < 1 {
 		return nil, fmt.Errorf("Truncated element data")
 	}
@@ -40,7 +46,7 @@ func Deserialize(data []byte) (Element, error) {
 		return nil, fmt.Errorf("Unsupported tree element type %s")
 	}
 
-	err := Unmarshal(bytes.NewReader(data), element)
+	err = Unmarshal(bytes.NewReader(data), element)
 	if err != nil {
 		return nil, err
 	}

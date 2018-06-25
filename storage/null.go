@@ -12,8 +12,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"hash"
-
-	"github.com/markkurossi/backup/tree"
 )
 
 type Null struct {
@@ -26,13 +24,13 @@ func NewNull() *Null {
 	}
 }
 
-func (n *Null) Write(data []byte) (*tree.ID, error) {
+func (n *Null) Write(data []byte) (*ID, error) {
 	n.h.Reset()
 	n.h.Write(data)
 
-	return tree.NewID(n.h.Sum(nil)), nil
+	return NewID(n.h.Sum(nil)), nil
 }
 
-func (n *Null) Read(id *tree.ID) ([]byte, error) {
+func (n *Null) Read(id *ID) ([]byte, error) {
 	return nil, fmt.Errorf("Data not found")
 }

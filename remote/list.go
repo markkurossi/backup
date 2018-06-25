@@ -16,7 +16,7 @@ import (
 	"github.com/markkurossi/backup/tree"
 )
 
-func List(root *tree.ID, reader storage.Reader) error {
+func List(root *storage.ID, reader storage.Reader) error {
 	return list("", false, root, reader)
 }
 
@@ -28,17 +28,9 @@ func nest(indent string, isLast bool) string {
 	}
 }
 
-func list(indent string, verbose bool, root *tree.ID,
+func list(indent string, verbose bool, root *storage.ID,
 	reader storage.Reader) error {
-
-	data, err := reader.Read(root)
-	if err != nil {
-		return err
-	}
-	if len(data) < 1 {
-		return fmt.Errorf("Truncated data for blob %s", root)
-	}
-	element, err := tree.Deserialize(data)
+	element, err := tree.Deserialize(root, reader)
 	if err != nil {
 		return err
 	}
