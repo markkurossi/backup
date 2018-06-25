@@ -31,7 +31,6 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 	var buf [8]byte
 
 	if !value.IsValid() {
-		fmt.Printf("Invalid value %v\n", value)
 		return nil
 	}
 
@@ -105,4 +104,98 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 	default:
 		return fmt.Errorf("Unsupported type: %s", value.Type().Kind().String())
 	}
+}
+
+func Unmarshal(in io.Reader, v interface{}) error {
+	return unmarshalValue(in, reflect.ValueOf(v))
+}
+
+func unmarshalValue(in io.Reader, value reflect.Value) (err error) {
+	var buf [8]byte
+
+	if !value.IsValid() {
+		return nil
+	}
+
+	switch value.Type().Kind() {
+	case reflect.Uint8:
+		_, err = io.ReadFull(in, buf[:1])
+		if err != nil {
+			return
+		}
+		value.SetUint(uint64(buf[0]))
+
+	case reflect.Uint32:
+		_, err = io.ReadFull(in, buf[:4])
+		if err != nil {
+			return
+		}
+		value.SetUint(uint64(binary.BigEndian.Uint32(buf[:4])))
+
+	case reflect.Int64:
+		_, err = io.ReadFull(in, buf[:8])
+		if err != nil {
+			return
+		}
+		value.SetInt(int64(binary.BigEndian.Uint64(buf[:8])))
+
+	case reflect.Slice:
+		_, err := io.ReadFull(in, buf[:4])
+		if err != nil {
+			return err
+		}
+		count := binary.BigEndian.Uint32(buf[:4])
+		if value.Type().Elem().Kind() == reflect.Uint8 {
+			data := make([]byte, count)
+			_, err := io.ReadFull(in, data)
+			if err != nil {
+				return err
+			}
+			value.SetBytes(data)
+		} else {
+			slice := reflect.MakeSlice(value.Type(), int(count), int(count))
+			for i := 0; uint32(i) < count; i++ {
+				el := reflect.New(value.Type().Elem())
+				if err := unmarshalValue(in, el); err != nil {
+					return err
+				}
+				slice.Index(i).Set(reflect.Indirect(el))
+			}
+			value.Set(slice)
+		}
+
+	case reflect.String:
+		_, err := io.ReadFull(in, buf[:4])
+		if err != nil {
+			return err
+		}
+		count := binary.BigEndian.Uint32(buf[:4])
+		data := make([]byte, count)
+		_, err = io.ReadFull(in, data)
+		if err != nil {
+			return err
+		}
+		value.SetString(string(data))
+
+	case reflect.Ptr:
+		pointed := reflect.Indirect(value)
+		if !pointed.IsValid() {
+			pointed = reflect.New(value.Type().Elem())
+			value.Set(pointed)
+		}
+		return unmarshalValue(in, pointed)
+
+	case reflect.Struct:
+		for i := 0; i < value.NumField(); i++ {
+			err = unmarshalValue(in, value.Field(i))
+			if err != nil {
+				return
+			}
+		}
+
+	default:
+		return fmt.Errorf("Unsupported type: %s", value.Type().Kind().String())
+	}
+
+	return
 }

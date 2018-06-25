@@ -63,20 +63,19 @@ func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 		}
 		return writer.Write(data)
 	} else {
-		// XXX Should do in 1MB chunks
-		data, err := ioutil.ReadFile(root)
-		if err != nil {
-			return nil, err
+		if fileInfo.Size() < 1024*1024 {
+			data, err := ioutil.ReadFile(root)
+			if err != nil {
+				return nil, err
+			}
+			file := tree.NewFile(data)
+			data, err = file.Serialize()
+			if err != nil {
+				return nil, err
+			}
+			return writer.Write(data)
+		} else {
+			return nil, fmt.Errorf("File %s > 1MB", fileInfo.Name())
 		}
-		id, err := writer.Write(data)
-		if err != nil {
-			return nil, err
-		}
-		file := tree.NewFile(fileInfo.Size(), id)
-		data, err = file.Serialize()
-		if err != nil {
-			return nil, err
-		}
-		return writer.Write(data)
 	}
 }

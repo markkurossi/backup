@@ -10,18 +10,28 @@ package tree
 
 type File struct {
 	Type    Type
-	Size    int64
-	Content *ID
+	Content []byte
 }
 
 func (f *File) Serialize() ([]byte, error) {
 	return Marshal(f)
 }
 
-func NewFile(size int64, content *ID) *File {
+func (f *File) IsDir() bool {
+	return false
+}
+
+func (f *File) Directory() *Directory {
+	panic("File can't be converted to Directory")
+}
+
+func (f *File) File() *File {
+	return f
+}
+
+func NewFile(content []byte) *File {
 	return &File{
 		Type:    TypeFile,
-		Size:    size,
 		Content: content,
 	}
 }

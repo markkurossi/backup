@@ -23,7 +23,7 @@ type File struct {
 	h    hash.Hash
 }
 
-func NewFile(root string) (Writer, error) {
+func NewFile(root string) (*File, error) {
 	fmt.Printf("Initializing filesystem storage to '%s'\n", root)
 
 	fileInfo, err := os.Stat(root)
@@ -56,10 +56,19 @@ func (f *File) Write(data []byte) (*tree.ID, error) {
 
 	err = ioutil.WriteFile(path, data, 0644)
 	if err != nil {
+		os.Remove(path)
 		return nil, err
 	}
 
 	return id, nil
+}
+
+func (f *File) Read(id *tree.ID) ([]byte, error) {
+	path, err := f.makeFilename(id)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadFile(path)
 }
 
 func (f *File) makeFilename(id *tree.ID) (string, error) {
