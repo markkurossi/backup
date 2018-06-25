@@ -8,14 +8,9 @@
 
 package tree
 
-func NewDirectory() *Directory {
-	return &Directory{
-		Type: TypeDirectory,
-	}
-}
-
 type Directory struct {
 	Type    Type
+	Version Version
 	Entries []DirectoryEntry
 }
 
@@ -46,6 +41,13 @@ func (d *Directory) Add(name string, mode uint32, modTime int64, entry *ID) {
 		ModTime: modTime,
 		Entry:   entry,
 	})
+}
+
+func NewDirectory() *Directory {
+	return &Directory{
+		Type:    TypeDirectory,
+		Version: 1,
+	}
 }
 
 type DirectoryEntry struct {

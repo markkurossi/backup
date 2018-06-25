@@ -35,3 +35,5 @@ const (
 	TypeChunkedFile
 	TypeDirectory
 )
+
+type Version uint8

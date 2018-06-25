@@ -10,6 +10,7 @@ package tree
 
 type File struct {
 	Type    Type
+	Version Version
 	Content []byte
 }
 
@@ -32,6 +33,7 @@ func (f *File) File() *File {
 func NewFile(content []byte) *File {
 	return &File{
 		Type:    TypeFile,
+		Version: 1,
 		Content: content,
 	}
 }
