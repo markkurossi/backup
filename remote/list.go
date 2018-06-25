@@ -9,9 +9,7 @@
 package remote
 
 import (
-	"encoding/hex"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/markkurossi/backup/storage"
@@ -60,17 +58,6 @@ func list(indent string, verbose bool, root *storage.ID,
 			if err != nil {
 				return err
 			}
-		}
-	} else {
-		in := element.File().Reader()
-		var buf [64]byte
-
-		for {
-			got, err := io.ReadFull(in, buf[:])
-			if err == io.EOF {
-				break
-			}
-			fmt.Printf("Data:\n%s", hex.Dump(buf[:got]))
 		}
 	}
 
