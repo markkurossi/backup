@@ -8,9 +8,12 @@
 
 package tree
 
+import (
+	"io"
+)
+
 type SimpleFile struct {
-	Type    Type
-	Version Version
+	ElementHeader
 	Content []byte
 }
 
@@ -34,10 +37,31 @@ func (f *SimpleFile) Size() int64 {
 	return int64(len(f.Content))
 }
 
+func (f *SimpleFile) Reader() io.Reader {
+	return &simpleReader{
+		data: f.Content,
+	}
+}
+
+type simpleReader struct {
+	data []byte
+}
+
+func (r *simpleReader) Read(p []byte) (int, error) {
+	read := copy(p, r.data)
+	if read == 0 {
+		return 0, io.EOF
+	}
+	r.data = r.data[read:]
+	return read, nil
+}
+
 func NewSimpleFile(content []byte) *SimpleFile {
 	return &SimpleFile{
-		Type:    TypeSimpleFile,
-		Version: 1,
+		ElementHeader: ElementHeader{
+			Type:    TypeSimpleFile,
+			Version: 1,
+		},
 		Content: content,
 	}
 }

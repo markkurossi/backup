@@ -8,6 +8,11 @@
 
 package tree
 
+import (
+	"io"
+)
+
 type File interface {
 	Size() int64
+	Reader() io.Reader
 }

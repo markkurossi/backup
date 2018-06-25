@@ -13,8 +13,7 @@ import (
 )
 
 type Directory struct {
-	Type    Type
-	Version Version
+	ElementHeader
 	Entries []DirectoryEntry
 }
 
@@ -46,8 +45,10 @@ func (d *Directory) Add(name string, mode uint32, modTime int64,
 
 func NewDirectory() *Directory {
 	return &Directory{
-		Type:    TypeDirectory,
-		Version: 1,
+		ElementHeader: ElementHeader{
+			Type:    TypeDirectory,
+			Version: 1,
+		},
 	}
 }
 

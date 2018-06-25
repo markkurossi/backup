@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strings"
 )
 
 func Marshal(v interface{}) ([]byte, error) {
@@ -94,16 +95,21 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 
 	case reflect.Struct:
 		for i := 0; i < value.NumField(); i++ {
+			tags := getTags(value, i)
+			if tags.ignore {
+				continue
+			}
 			err := marshalValue(out, value.Field(i))
 			if err != nil {
 				return err
 			}
 		}
-		return nil
 
 	default:
 		return fmt.Errorf("Unsupported type: %s", value.Type().Kind().String())
 	}
+
+	return nil
 }
 
 func Unmarshal(in io.Reader, v interface{}) error {
@@ -187,6 +193,10 @@ func unmarshalValue(in io.Reader, value reflect.Value) (err error) {
 
 	case reflect.Struct:
 		for i := 0; i < value.NumField(); i++ {
+			tags := getTags(value, i)
+			if tags.ignore {
+				continue
+			}
 			err = unmarshalValue(in, value.Field(i))
 			if err != nil {
 				return
@@ -198,4 +208,23 @@ func unmarshalValue(in io.Reader, value reflect.Value) (err error) {
 	}
 
 	return
+}
+
+func getTags(value reflect.Value, i int) tags {
+	t := tags{}
+	structField := value.Type().Field(i)
+
+	backupTags := structField.Tag.Get("backup")
+	for _, tag := range strings.Split(backupTags, ",") {
+		switch tag {
+		case "-":
+			t.ignore = true
+		}
+	}
+
+	return t
+}
+
+type tags struct {
+	ignore bool
 }

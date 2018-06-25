@@ -23,19 +23,13 @@ func main() {
 	list := flag.String("list", "", "List tree ID")
 	flag.Parse()
 
-	var storageWriter storage.Writer
-	var storageReader storage.Reader
+	var storageAccessor storage.Accessor
 	var err error
 
 	if len(*fileRoot) > 0 {
-		var file *storage.File
-		file, err = storage.NewFile(*fileRoot)
-		storageWriter = file
-		storageReader = file
+		storageAccessor, err = storage.NewFile(*fileRoot)
 	} else {
-		null := storage.NewNull()
-		storageWriter = null
-		storageReader = null
+		storageAccessor = storage.NewNull()
 	}
 	if err != nil {
 		fmt.Printf("Failed to initialize storage: %s\n", err)
@@ -48,13 +42,13 @@ func main() {
 			fmt.Printf("Invalid tree ID '%s': %s\n", *list, err)
 			return
 		}
-		err = remote.List(id, storageReader)
+		err = remote.List(id, storageAccessor)
 		if err != nil {
 			fmt.Printf("%s\n", err)
 		}
 	} else {
 		for _, file := range flag.Args() {
-			id, err := local.Traverse(file, storageWriter)
+			id, err := local.Traverse(file, storageAccessor)
 			if err != nil {
 				log.Printf("%s\n", err)
 			}

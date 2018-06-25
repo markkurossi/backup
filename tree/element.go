@@ -15,15 +15,26 @@ import (
 	"github.com/markkurossi/backup/storage"
 )
 
+type ElementHeader struct {
+	st      storage.Accessor `backup:"-"`
+	Type    Type
+	Version Version
+}
+
+func (hdr *ElementHeader) SetStorage(st storage.Accessor) {
+	hdr.st = st
+}
+
 type Element interface {
+	SetStorage(st storage.Accessor)
 	Serialize() ([]byte, error)
 	IsDir() bool
 	Directory() *Directory
 	File() File
 }
 
-func Deserialize(id *storage.ID, reader storage.Reader) (Element, error) {
-	data, err := reader.Read(id)
+func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
+	data, err := st.Read(id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +61,8 @@ func Deserialize(id *storage.ID, reader storage.Reader) (Element, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	element.SetStorage(st)
 
 	return element, nil
 }

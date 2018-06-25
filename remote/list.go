@@ -9,15 +9,17 @@
 package remote
 
 import (
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/markkurossi/backup/storage"
 	"github.com/markkurossi/backup/tree"
 )
 
-func List(root *storage.ID, reader storage.Reader) error {
-	return list("", false, root, reader)
+func List(root *storage.ID, st storage.Accessor) error {
+	return list("", false, root, st)
 }
 
 func nest(indent string, isLast bool) string {
@@ -29,8 +31,8 @@ func nest(indent string, isLast bool) string {
 }
 
 func list(indent string, verbose bool, root *storage.ID,
-	reader storage.Reader) error {
-	element, err := tree.Deserialize(root, reader)
+	st storage.Accessor) error {
+	element, err := tree.Deserialize(root, st)
 	if err != nil {
 		return err
 	}
@@ -54,10 +56,21 @@ func list(indent string, verbose bool, root *storage.ID,
 				fmt.Printf("\t%o\t%s", e.Mode&uint32(os.ModePerm), e.Entry)
 			}
 			fmt.Println()
-			err := list(nest(indent, isLast), verbose, e.Entry, reader)
+			err := list(nest(indent, isLast), verbose, e.Entry, st)
 			if err != nil {
 				return err
 			}
+		}
+	} else {
+		in := element.File().Reader()
+		var buf [64]byte
+
+		for {
+			got, err := io.ReadFull(in, buf[:])
+			if err == io.EOF {
+				break
+			}
+			fmt.Printf("Data:\n%s", hex.Dump(buf[:got]))
 		}
 	}
 

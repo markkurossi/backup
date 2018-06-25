@@ -9,12 +9,13 @@
 package tree
 
 import (
+	"io"
+
 	"github.com/markkurossi/backup/storage"
 )
 
 type ChunkedFile struct {
-	Type        Type
-	Version     Version
+	ElementHeader
 	ContentSize int64
 	Chunks      []Chunk
 }
@@ -39,6 +40,40 @@ func (c *ChunkedFile) Size() int64 {
 	return c.ContentSize
 }
 
+func (c *ChunkedFile) Reader() io.Reader {
+	return &chunkReader{
+		st:     c.st,
+		chunks: c.Chunks,
+	}
+}
+
+type chunkReader struct {
+	st     storage.Accessor
+	chunks []Chunk
+	data   []byte
+}
+
+func (r *chunkReader) Read(p []byte) (n int, err error) {
+	if len(r.data) == 0 {
+		if len(r.chunks) == 0 {
+			return 0, io.EOF
+		}
+		data, err := r.st.Read(r.chunks[0].Content)
+		if err != nil {
+			return 0, err
+		}
+		r.data = data
+		r.chunks = r.chunks[1:]
+	}
+
+	read := copy(p, r.data)
+	if read == 0 {
+		return 0, io.EOF
+	}
+	r.data = r.data[read:]
+	return read, nil
+}
+
 func (c *ChunkedFile) Add(size int64, chunk *storage.ID) {
 	c.Chunks = append(c.Chunks, Chunk{
 		Size:    size,
@@ -48,8 +83,10 @@ func (c *ChunkedFile) Add(size int64, chunk *storage.ID) {
 
 func NewChunkedFile(size int64) *ChunkedFile {
 	return &ChunkedFile{
-		Type:        TypeChunkedFile,
-		Version:     1,
+		ElementHeader: ElementHeader{
+			Type:    TypeChunkedFile,
+			Version: 1,
+		},
 		ContentSize: size,
 	}
 }
