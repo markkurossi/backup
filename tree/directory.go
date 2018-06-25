@@ -15,11 +15,7 @@ type Directory struct {
 }
 
 func (d *Directory) Serialize() ([]byte, error) {
-	data, err := Marshal(d)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return Marshal(d)
 }
 
 func (d *Directory) IsDir() bool {
@@ -30,7 +26,7 @@ func (d *Directory) Directory() *Directory {
 	return d
 }
 
-func (d *Directory) File() *File {
+func (d *Directory) File() File {
 	panic("Directory can't be converted to File")
 }
 

@@ -17,14 +17,18 @@ import (
 )
 
 func List(root *tree.ID, reader storage.Reader) error {
-	return list("|-- ", "`-- ", false, root, reader)
+	return list("", false, root, reader)
 }
 
-func nest(indent string) string {
-	return "|   " + indent
+func nest(indent string, isLast bool) string {
+	if isLast {
+		return indent + "    "
+	} else {
+		return indent + "|   "
+	}
 }
 
-func list(indent, last string, verbose bool, root *tree.ID,
+func list(indent string, verbose bool, root *tree.ID,
 	reader storage.Reader) error {
 
 	data, err := reader.Read(root)
@@ -43,10 +47,12 @@ func list(indent, last string, verbose bool, root *tree.ID,
 		count := len(element.Directory().Entries)
 		for idx, e := range element.Directory().Entries {
 			var in string
+			var isLast bool
 			if idx+1 == count {
-				in = last
+				in = indent + "`-- "
+				isLast = true
 			} else {
-				in = indent
+				in = indent + "|-- "
 			}
 			fmt.Printf("%s%s", in, e.Name)
 			if verbose {
@@ -56,7 +62,10 @@ func list(indent, last string, verbose bool, root *tree.ID,
 				fmt.Printf("\t%o\t%s", e.Mode&uint32(os.ModePerm), e.Entry)
 			}
 			fmt.Println()
-			list(nest(indent), nest(last), verbose, e.Entry, reader)
+			err := list(nest(indent, isLast), verbose, e.Entry, reader)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

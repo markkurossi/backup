@@ -10,6 +10,7 @@ package local
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -68,14 +69,42 @@ func Traverse(root string, writer storage.Writer) (*tree.ID, error) {
 			if err != nil {
 				return nil, err
 			}
-			file := tree.NewFile(data)
+			file := tree.NewSimpleFile(data)
 			data, err = file.Serialize()
 			if err != nil {
 				return nil, err
 			}
 			return writer.Write(data)
 		} else {
-			return nil, fmt.Errorf("File %s > 1MB", fileInfo.Name())
+			file, err := os.Open(root)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+
+			buf := make([]byte, 1024*1024)
+			cf := tree.NewChunkedFile(fileInfo.Size())
+
+			for {
+				read, err := file.Read(buf)
+				if read == 0 {
+					if err != io.EOF {
+						return nil, err
+					}
+					break
+				}
+				id, err := writer.Write(buf[:read])
+				if err != nil {
+					return nil, err
+				}
+				cf.Add(int64(read), id)
+			}
+
+			data, err := cf.Serialize()
+			if err != nil {
+				return nil, err
+			}
+			return writer.Write(data)
 		}
 	}
 }

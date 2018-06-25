@@ -17,7 +17,7 @@ type Element interface {
 	Serialize() ([]byte, error)
 	IsDir() bool
 	Directory() *Directory
-	File() *File
+	File() File
 }
 
 func Deserialize(data []byte) (Element, error) {
@@ -27,8 +27,11 @@ func Deserialize(data []byte) (Element, error) {
 	var element Element
 
 	switch Type(data[0]) {
-	case TypeFile:
-		element = new(File)
+	case TypeSimpleFile:
+		element = new(SimpleFile)
+
+	case TypeChunkedFile:
+		element = new(ChunkedFile)
 
 	case TypeDirectory:
 		element = new(Directory)

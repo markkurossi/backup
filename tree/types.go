@@ -16,8 +16,8 @@ type Type uint8
 
 func (t Type) String() string {
 	switch t {
-	case TypeFile:
-		return "file"
+	case TypeSimpleFile:
+		return "simple-file"
 
 	case TypeChunkedFile:
 		return "chunked-file"
@@ -31,7 +31,7 @@ func (t Type) String() string {
 }
 
 const (
-	TypeFile Type = iota
+	TypeSimpleFile Type = iota
 	TypeChunkedFile
 	TypeDirectory
 )
