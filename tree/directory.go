@@ -9,6 +9,8 @@
 package tree
 
 import (
+	"os"
+
 	"github.com/markkurossi/backup/storage"
 )
 
@@ -33,7 +35,7 @@ func (d *Directory) File() File {
 	panic("Directory can't be converted to File")
 }
 
-func (d *Directory) Add(name string, mode uint32, modTime int64,
+func (d *Directory) Add(name string, mode os.FileMode, modTime int64,
 	entry *storage.ID) {
 	d.Entries = append(d.Entries, DirectoryEntry{
 		Name:    name,
@@ -54,7 +56,7 @@ func NewDirectory() *Directory {
 
 type DirectoryEntry struct {
 	Name    string
-	Mode    uint32
+	Mode    os.FileMode
 	ModTime int64
 	Entry   *storage.ID
 }

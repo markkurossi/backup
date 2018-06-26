@@ -55,7 +55,7 @@ func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 				fmt.Printf("%s\t%s\n", id, f.Name())
 			}
 
-			dir.Add(f.Name(), uint32(f.Mode()), f.ModTime().Unix(), id)
+			dir.Add(f.Name(), f.Mode(), f.ModTime().Unix(), id)
 		}
 
 		data, err := dir.Serialize()

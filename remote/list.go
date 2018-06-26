@@ -10,14 +10,13 @@ package remote
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/markkurossi/backup/storage"
 	"github.com/markkurossi/backup/tree"
 )
 
 func List(root *storage.ID, st storage.Accessor) error {
-	return list("", false, root, st)
+	return list("", true, root, st)
 }
 
 func nest(indent string, isLast bool) string {
@@ -51,7 +50,7 @@ func list(indent string, verbose bool, root *storage.ID,
 				for i := 0; i+len(in)+len(e.Name) < 40; i++ {
 					fmt.Printf(" ")
 				}
-				fmt.Printf("\t%o\t%s", e.Mode&uint32(os.ModePerm), e.Entry)
+				fmt.Printf("\t%s\t%s", e.Mode, e.Entry)
 			}
 			fmt.Println()
 			err := list(nest(indent, isLast), verbose, e.Entry, st)
