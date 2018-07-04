@@ -10,6 +10,8 @@ package tree
 
 import (
 	"io"
+
+	"github.com/markkurossi/backup/lib/encoding"
 )
 
 type SimpleFile struct {
@@ -18,7 +20,7 @@ type SimpleFile struct {
 }
 
 func (f *SimpleFile) Serialize() ([]byte, error) {
-	return Marshal(f)
+	return encoding.Marshal(f)
 }
 
 func (f *SimpleFile) IsDir() bool {

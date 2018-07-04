@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/markkurossi/backup/lib/encoding"
 	"github.com/markkurossi/backup/storage"
 )
 
@@ -57,7 +58,7 @@ func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
 		return nil, fmt.Errorf("Unsupported tree element type %s")
 	}
 
-	err = Unmarshal(bytes.NewReader(data), element)
+	err = encoding.Unmarshal(bytes.NewReader(data), element)
 	if err != nil {
 		return nil, err
 	}

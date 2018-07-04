@@ -11,6 +11,7 @@ package tree
 import (
 	"os"
 
+	"github.com/markkurossi/backup/lib/encoding"
 	"github.com/markkurossi/backup/storage"
 )
 
@@ -20,7 +21,7 @@ type Directory struct {
 }
 
 func (d *Directory) Serialize() ([]byte, error) {
-	return Marshal(d)
+	return encoding.Marshal(d)
 }
 
 func (d *Directory) IsDir() bool {

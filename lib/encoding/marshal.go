@@ -6,7 +6,7 @@
 // All rights reserved.
 //
 
-package tree
+package encoding
 
 import (
 	"bytes"

@@ -11,6 +11,7 @@ package tree
 import (
 	"io"
 
+	"github.com/markkurossi/backup/lib/encoding"
 	"github.com/markkurossi/backup/storage"
 )
 
@@ -21,7 +22,7 @@ type ChunkedFile struct {
 }
 
 func (c *ChunkedFile) Serialize() ([]byte, error) {
-	return Marshal(c)
+	return encoding.Marshal(c)
 }
 
 func (c *ChunkedFile) IsDir() bool {
