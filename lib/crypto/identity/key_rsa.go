@@ -11,21 +11,34 @@ package identity
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
+	"fmt"
 
 	"github.com/markkurossi/backup/lib/encoding"
 )
 
 type rsaKey struct {
-	name string
-	key  *rsa.PrivateKey
+	name    string
+	private *rsa.PrivateKey
+}
+
+func (key *rsaKey) Name() string {
+	return key.name
+}
+
+func (key *rsaKey) ID() string {
+	data := x509.MarshalPKCS1PublicKey(&key.private.PublicKey)
+	sum := sha256.Sum256(data)
+	return fmt.Sprintf("sha256:%s", base64.StdEncoding.EncodeToString(sum[:]))
 }
 
 func (key *rsaKey) Marshal() ([]byte, error) {
 	keyData := &KeyData{
 		Name: key.name,
 		Type: KeyRSA,
-		Data: x509.MarshalPKCS1PrivateKey(key.key),
+		Data: x509.MarshalPKCS1PrivateKey(key.private),
 	}
 	return encoding.Marshal(keyData)
 }
@@ -36,8 +49,8 @@ func NewRSAKey(name string, bits int) (Key, error) {
 		return nil, err
 	}
 	return &rsaKey{
-		name: name,
-		key:  key,
+		name:    name,
+		private: key,
 	}, nil
 }
 
@@ -48,7 +61,7 @@ func UnmarshalRSAKey(data *KeyData) (Key, error) {
 	}
 
 	return &rsaKey{
-		name: data.Name,
-		key:  key,
+		name:    data.Name,
+		private: key,
 	}, nil
 }

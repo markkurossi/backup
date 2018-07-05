@@ -16,6 +16,8 @@ import (
 )
 
 type Key interface {
+	Name() string
+	ID() string
 	Marshal() ([]byte, error)
 }
 

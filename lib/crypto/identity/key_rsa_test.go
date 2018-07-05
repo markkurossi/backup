@@ -35,8 +35,14 @@ func TestRSA(t *testing.T) {
 		t.Fatalf("Failed to decrypt data: %v", err)
 	}
 
-	_, err = Unmarshal(decrypted)
+	key2, err := Unmarshal(decrypted)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal RSA key: %v", err)
+	}
+	if key.Name() != key2.Name() {
+		t.Fatalf("Key name mismatch: %s vs. %s", key.Name(), key2.Name())
+	}
+	if key.ID() != key2.ID() {
+		t.Fatalf("Key ID mismatch: %s vs. %s", key.ID(), key2.ID())
 	}
 }
