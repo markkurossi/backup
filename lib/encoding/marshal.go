@@ -131,6 +131,13 @@ func unmarshalValue(in io.Reader, value reflect.Value) (err error) {
 		}
 		value.SetUint(uint64(buf[0]))
 
+	case reflect.Int:
+		_, err = io.ReadFull(in, buf[:4])
+		if err != nil {
+			return
+		}
+		value.SetInt(int64(binary.BigEndian.Uint32(buf[:4])))
+
 	case reflect.Uint32:
 		_, err = io.ReadFull(in, buf[:4])
 		if err != nil {
