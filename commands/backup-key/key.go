@@ -23,7 +23,7 @@ const (
 func main() {
 	path, ok := os.LookupEnv(sockEnv)
 	if !ok {
-		fmt.Printf("Agent socket environment variable %s not set\n", sockEnv)
+		log.Fatalf("Agent socket environment variable %s not set\n", sockEnv)
 	}
 
 	client, err := agent.NewClient(path)
