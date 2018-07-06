@@ -21,12 +21,26 @@ type Key interface {
 	Marshal() ([]byte, error)
 }
 
+type PrivateKey interface {
+	Key
+	Decrypt(ciphertext []byte) ([]byte, error)
+	PublicKey() PublicKey
+}
+
+type PublicKey interface {
+	Key
+	Encrypt(msg []byte) ([]byte, error)
+}
+
 type KeyType int
 
 func (t KeyType) String() string {
 	switch t {
-	case KeyRSA:
-		return "rsa"
+	case KeyRSAPrivateKey:
+		return "rsa-private-key"
+
+	case KeyRSAPublicKey:
+		return "rsa-public-key"
 
 	default:
 		return fmt.Sprintf("{KeyType %d}", t)
@@ -34,7 +48,8 @@ func (t KeyType) String() string {
 }
 
 const (
-	KeyRSA KeyType = 0
+	KeyRSAPrivateKey KeyType = 0
+	KeyRSAPublicKey          = 1
 )
 
 type KeyData struct {
@@ -50,10 +65,37 @@ func Unmarshal(data []byte) (Key, error) {
 	}
 
 	switch keyData.Type {
-	case KeyRSA:
-		return UnmarshalRSAKey(keyData)
+	case KeyRSAPrivateKey:
+		return UnmarshalRSAPrivateKey(keyData)
+
+	case KeyRSAPublicKey:
+		return UnmarshalRSAPublicKey(keyData)
 
 	default:
-		return nil, fmt.Errorf("Unknown key type %s", keyData.Type)
+		return nil, fmt.Errorf("Invalid key type %s", keyData.Type)
 	}
+}
+
+func UnmarshalPrivateKey(data []byte) (PrivateKey, error) {
+	key, err := Unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+	private, ok := key.(PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("Invalid private key: %T", key)
+	}
+	return private, nil
+}
+
+func UnmarshalPublicKey(data []byte) (PublicKey, error) {
+	key, err := Unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+	private, ok := key.(PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("Invalid public key: %T", key)
+	}
+	return private, nil
 }
