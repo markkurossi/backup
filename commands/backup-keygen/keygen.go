@@ -11,9 +11,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 	"os/user"
 	"syscall"
 
@@ -34,15 +32,10 @@ func main() {
 	}
 	fmt.Printf("Created identity key %s\n", key.ID())
 
-	keyData, err := key.Marshal()
-	if err != nil {
-		log.Fatalf("Failed to marshal key: %s\n", err)
-	}
-
-	keyDir := fmt.Sprintf("%s/.backup/identities", user.HomeDir)
-	err = os.MkdirAll(keyDir, 0700)
-	if err != nil {
-		log.Fatalf("Failed to create identity directory %s: %s\n", keyDir, err)
+	storage := identity.NewStorage(user)
+	if err := storage.Open(); err != nil {
+		log.Fatalf("Failed to open identity storage %s: %s\n",
+			storage.Dir, err)
 	}
 
 	var passphrase []byte
@@ -69,16 +62,7 @@ func main() {
 		break
 	}
 
-	// Encrypt key.
-	encrypted, err := identity.Encrypt(keyData, identity.EncrAES128GCM,
-		passphrase, identity.KDFPBKDF24096SHA256)
-	if err != nil {
-		log.Fatalf("Failed to encrypt key: %s\n", err)
-	}
-
-	// And save it.
-	keyPath := fmt.Sprintf("%s/%s", keyDir, key.ID())
-	err = ioutil.WriteFile(keyPath, encrypted, 0700)
+	err = storage.Save(key, passphrase)
 	if err != nil {
 		log.Fatalf("Failed to save key: %s\n", err)
 	}

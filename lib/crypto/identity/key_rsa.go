@@ -86,7 +86,7 @@ func (key *rsaPublicKey) Encrypt(msg []byte) ([]byte, error) {
 func keyID(key *rsa.PublicKey) string {
 	data := x509.MarshalPKCS1PublicKey(key)
 	sum := sha256.Sum256(data)
-	return fmt.Sprintf("sha256:%s", base64.StdEncoding.EncodeToString(sum[:]))
+	return fmt.Sprintf("sha256:%s", base64.URLEncoding.EncodeToString(sum[:]))
 }
 
 func NewRSAKey(name string, bits int) (PrivateKey, error) {
