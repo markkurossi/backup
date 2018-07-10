@@ -1,5 +1,5 @@
 //
-// keygen.go
+// cmd_keygen.go
 //
 // Copyright (c) 2018 Markku Rossi
 //
@@ -9,41 +9,48 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
+	"os"
 	"os/user"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/util"
 )
 
-func main() {
+func cmdKeygen() {
+	flag.Parse()
+
 	user, err := user.Current()
 	if err != nil {
-		log.Fatalf("Failed to get current user: %s\n", err)
+		fmt.Printf("Failed to get current user: %s\n", err)
+		os.Exit(1)
 	}
 	bits := 4096
 	fmt.Printf("Creating %d bit RSA key...\n", bits)
 	key, err := identity.NewRSAKey(user.Username, bits)
 	if err != nil {
-		log.Fatalf("Identity key generation failed: %s\n", err)
+		fmt.Printf("Identity key generation failed: %s\n", err)
+		os.Exit(1)
 	}
 	fmt.Printf("Created identity key %s\n", key.ID())
 
 	storage := identity.NewStorage(user)
 	if err := storage.Open(); err != nil {
-		log.Fatalf("Failed to open identity storage %s: %s\n",
+		fmt.Printf("Failed to open identity storage %s: %s\n",
 			storage.Dir, err)
+		os.Exit(1)
 	}
 
 	passphrase, err := util.ReadPassphrase("Enter passphrase for the key", true)
 	if err != nil {
 		fmt.Printf("%s\n", err)
-		return
+		os.Exit(1)
 	}
 
 	err = storage.Save(key, passphrase)
 	if err != nil {
-		log.Fatalf("Failed to save key: %s\n", err)
+		fmt.Printf("Failed to save key: %s\n", err)
+		os.Exit(1)
 	}
 }
