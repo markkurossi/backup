@@ -9,6 +9,7 @@
 package agent
 
 import (
+	"io"
 	"net"
 )
 
@@ -68,14 +69,26 @@ func (c *Connection) SendKeys(keys []KeyInfo) error {
 	})
 }
 
+func (c *Connection) SendDecrypted(data []byte) error {
+	return SendMessage(c.conn, &MsgDecrypted{
+		MsgHdr: MsgHdr{
+			t: Decrypted,
+		},
+		Data: data,
+	})
+}
+
 func (c *Connection) messageLoop() {
 	for {
 		msg, err := ReceiveMessage(c.conn)
 		if err != nil {
-			break
+			if err == io.EOF {
+				break
+			}
+			c.SendError(err.Error())
+		} else {
+			c.C <- msg
 		}
-
-		c.C <- msg
 	}
 
 	close(c.C)

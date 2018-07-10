@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	identities []identity.Key
+	identities = make(map[string]identity.PrivateKey)
 )
 
 func main() {
@@ -61,26 +61,21 @@ func main() {
 }
 
 func handleConnection(c *agent.Connection) {
+messageLoop:
 	for msg := range c.C {
 		log.Printf("Message: %v\n", msg)
 		switch m := msg.(type) {
 		case *agent.MsgAddKey:
-			key, err := identity.Unmarshal(m.Data)
+			key, err := identity.UnmarshalPrivateKey(m.Data)
 			if err != nil {
 				txt := fmt.Sprintf("Invalid key data: %s", err)
 				log.Printf("%s\n", txt)
 				c.SendError(txt)
 			} else {
 				// Do we already have this key?
-				var found bool
-				for _, k := range identities {
-					if k.ID() == key.ID() {
-						found = true
-						break
-					}
-				}
-				if !found {
-					identities = append(identities, key)
+				_, ok := identities[key.ID()]
+				if !ok {
+					identities[key.ID()] = key
 				}
 				c.SendOK()
 			}
@@ -88,14 +83,37 @@ func handleConnection(c *agent.Connection) {
 		case *agent.MsgListKeys:
 			var keys []agent.KeyInfo
 			for _, key := range identities {
+				pub, err := key.PublicKey().Marshal()
+				if err != nil {
+					txt := fmt.Sprintf("Failed to marshal public key: %s", err)
+					log.Printf("%s\n", err)
+					c.SendError(txt)
+					continue messageLoop
+				}
 				keys = append(keys, agent.KeyInfo{
-					Name: key.Name(),
-					Type: key.Type(),
-					Size: key.Size(),
-					ID:   key.ID(),
+					Name:      key.Name(),
+					Type:      key.Type(),
+					Size:      key.Size(),
+					ID:        key.ID(),
+					PublicKey: pub,
 				})
 			}
 			c.SendKeys(keys)
+
+		case *agent.MsgDecrypt:
+			key, ok := identities[m.KeyID]
+			if !ok {
+				txt := fmt.Sprintf("Unknown key: %s", m.KeyID)
+				log.Printf("%s\n", txt)
+				c.SendError(txt)
+				continue
+			}
+			data, err := key.Decrypt(m.Data)
+			if err != nil {
+				c.SendError(err.Error())
+				continue
+			}
+			c.SendDecrypted(data)
 
 		default:
 			txt := fmt.Sprintf("Unsupported client message '%s'", msg.Type())

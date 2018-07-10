@@ -9,6 +9,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"log"
@@ -57,7 +58,21 @@ func main() {
 			return
 		}
 		for _, k := range keys {
-			fmt.Printf("%s-%d %s %s\n", typeName(k.Type), k.Size, k.ID, k.Name)
+			fmt.Printf("%s-%d %s %s\n",
+				typeName(k.Type()), k.Size(), k.ID(), k.Name())
+			msg := []byte("Hello, world!")
+			pub := k.PublicKey()
+			cipher, err := pub.Encrypt(msg)
+			if err != nil {
+				log.Fatalf("Failed to encrypt with public key: %s\n", err)
+			}
+			plain, err := k.Decrypt(cipher)
+			if err != nil {
+				log.Fatalf("Failed to decrypt with private key: %s\n", err)
+			}
+			if !bytes.Equal(msg, plain) {
+				log.Fatalf("Data mismatch\n")
+			}
 		}
 	}
 

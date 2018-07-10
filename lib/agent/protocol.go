@@ -22,23 +22,27 @@ import (
 type MsgType uint8
 
 const (
-	OK       MsgType = 0
-	Error            = 1
-	AddKey           = 2
-	Question         = 3
-	Answer           = 4
-	ListKeys         = 5
-	Keys             = 6
+	OK        MsgType = 0
+	Error             = 1
+	AddKey            = 2
+	Question          = 3
+	Answer            = 4
+	ListKeys          = 5
+	Keys              = 6
+	Decrypt           = 7
+	Decrypted         = 8
 )
 
 var MsgTypeNames = map[MsgType]string{
-	OK:       "ok",
-	Error:    "error",
-	AddKey:   "add-key",
-	Question: "question",
-	Answer:   "answer",
-	ListKeys: "list-keys",
-	Keys:     "keys",
+	OK:        "ok",
+	Error:     "error",
+	AddKey:    "add-key",
+	Question:  "question",
+	Answer:    "answer",
+	ListKeys:  "list-keys",
+	Keys:      "keys",
+	Decrypt:   "decrypt",
+	Decrypted: "decrypted",
 }
 
 func (t MsgType) String() string {
@@ -105,10 +109,22 @@ type MsgKeys struct {
 }
 
 type KeyInfo struct {
-	Name string
-	Type identity.KeyType
-	Size int
-	ID   string
+	Name      string
+	Type      identity.KeyType
+	Size      int
+	ID        string
+	PublicKey []byte
+}
+
+type MsgDecrypt struct {
+	MsgHdr
+	KeyID string
+	Data  []byte
+}
+
+type MsgDecrypted struct {
+	MsgHdr
+	Data []byte
 }
 
 func RPC(conn net.Conn, msg Msg) (Msg, error) {
@@ -180,6 +196,12 @@ func ReceiveMessage(conn net.Conn) (Msg, error) {
 
 	case Keys:
 		msg = new(MsgKeys)
+
+	case Decrypt:
+		msg = new(MsgDecrypt)
+
+	case Decrypted:
+		msg = new(MsgDecrypted)
 
 	default:
 		return nil, fmt.Errorf("protocol: unexpected message: %s",
