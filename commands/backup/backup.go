@@ -15,8 +15,9 @@ import (
 )
 
 var commands = map[string]func(){
-	"init":   cmdInit,
-	"keygen": cmdKeygen,
+	"init":    cmdInit,
+	"keygen":  cmdKeygen,
+	"add-key": cmdAddKey,
 }
 
 func main() {

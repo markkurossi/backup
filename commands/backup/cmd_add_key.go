@@ -1,5 +1,5 @@
 //
-// addkey.go
+// cmd_add_key.go
 //
 // Copyright (c) 2018 Markku Rossi
 //
@@ -25,11 +25,11 @@ const (
 	sockEnv = "BACKUP_AGENT_SOCK"
 )
 
-func main() {
+func cmdAddKey() {
 	address := flag.String("a", "", "Agent UNIX-domain socket address.")
 	addAll := flag.Bool("A", false,
 		"Add all identities from your identity storage.")
-	list := flag.Bool("l", false, "List all keys store in key agent.")
+	list := flag.Bool("l", false, "List all keys stored in key agent.")
 	flag.Parse()
 
 	var path string
@@ -74,6 +74,7 @@ func main() {
 				log.Fatalf("Data mismatch\n")
 			}
 		}
+		return
 	}
 
 	if *addAll {
@@ -107,11 +108,9 @@ func main() {
 				fmt.Printf("Failed to add key: %s\n", err)
 			}
 		}
+		return
 	}
-
-	for _, cmd := range flag.Args() {
-		fmt.Printf("Command: %s\n", cmd)
-	}
+	flag.Usage()
 }
 
 func typeName(keyType identity.KeyType) string {
