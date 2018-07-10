@@ -42,12 +42,29 @@ type Connection struct {
 	C    chan Msg
 }
 
+func (c *Connection) SendOK() error {
+	return SendMessage(c.conn, &MsgOK{
+		MsgHdr: MsgHdr{
+			t: OK,
+		},
+	})
+}
+
 func (c *Connection) SendError(msg string) error {
 	return SendMessage(c.conn, &MsgError{
 		MsgHdr: MsgHdr{
 			t: Error,
 		},
 		Message: msg,
+	})
+}
+
+func (c *Connection) SendKeys(keys []KeyInfo) error {
+	return SendMessage(c.conn, &MsgKeys{
+		MsgHdr: MsgHdr{
+			t: Keys,
+		},
+		Keys: keys,
 	})
 }
 

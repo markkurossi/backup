@@ -73,14 +73,15 @@ const (
 type EncryptedKey struct {
 	Magic     uint32
 	Version   byte
+	Name      string
 	Salt      []byte
 	KDFAlg    KDFAlg
 	EncrAlg   EncrAlg
 	Encrypted []byte
 }
 
-func Encrypt(data []byte, encrAlg EncrAlg, passphrase []byte, kdfAlg KDFAlg) (
-	[]byte, error) {
+func Encrypt(data []byte, encrAlg EncrAlg, name string,
+	passphrase []byte, kdfAlg KDFAlg) ([]byte, error) {
 
 	salt := make([]byte, 16)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
@@ -98,6 +99,7 @@ func Encrypt(data []byte, encrAlg EncrAlg, passphrase []byte, kdfAlg KDFAlg) (
 	enc := &EncryptedKey{
 		Magic:     magic,
 		Version:   version,
+		Name:      name,
 		Salt:      salt,
 		KDFAlg:    kdfAlg,
 		EncrAlg:   encrAlg,
@@ -107,7 +109,7 @@ func Encrypt(data []byte, encrAlg EncrAlg, passphrase []byte, kdfAlg KDFAlg) (
 	return encoding.Marshal(enc)
 }
 
-func Decrypt(passphrase, ciphertext []byte) ([]byte, error) {
+func Decrypt(ciphertext, passphrase []byte) ([]byte, error) {
 	if len(ciphertext) < 5 {
 		return nil, errors.New("Truncated ID key blob")
 	}

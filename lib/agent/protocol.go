@@ -15,6 +15,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/encoding"
 )
 
@@ -23,7 +24,7 @@ type MsgType uint8
 const (
 	OK       MsgType = 0
 	Error            = 1
-	AddKeys          = 2
+	AddKey           = 2
 	Question         = 3
 	Answer           = 4
 	ListKeys         = 5
@@ -33,7 +34,7 @@ const (
 var MsgTypeNames = map[MsgType]string{
 	OK:       "ok",
 	Error:    "error",
-	AddKeys:  "add-keys",
+	AddKey:   "add-key",
 	Question: "question",
 	Answer:   "answer",
 	ListKeys: "list-keys",
@@ -78,9 +79,9 @@ type MsgError struct {
 	Message string
 }
 
-type MsgAddKeys struct {
+type MsgAddKey struct {
 	MsgHdr
-	Directory string
+	Data []byte
 }
 
 type MsgQuestion struct {
@@ -98,10 +99,24 @@ type MsgListKeys struct {
 	MsgHdr
 }
 
+type MsgKeys struct {
+	MsgHdr
+	Keys []KeyInfo
+}
+
 type KeyInfo struct {
-	Type        string
-	Fingerprint string
-	Comment     string
+	Name string
+	Type identity.KeyType
+	Size int
+	ID   string
+}
+
+func RPC(conn net.Conn, msg Msg) (Msg, error) {
+	err := SendMessage(conn, msg)
+	if err != nil {
+		return nil, err
+	}
+	return ReceiveMessage(conn)
 }
 
 func SendMessage(conn net.Conn, msg Msg) error {
@@ -151,8 +166,8 @@ func ReceiveMessage(conn net.Conn) (Msg, error) {
 	case Error:
 		msg = new(MsgError)
 
-	case AddKeys:
-		msg = new(MsgAddKeys)
+	case AddKey:
+		msg = new(MsgAddKey)
 
 	case Question:
 		msg = new(MsgQuestion)
@@ -163,8 +178,12 @@ func ReceiveMessage(conn net.Conn) (Msg, error) {
 	case ListKeys:
 		msg = new(MsgListKeys)
 
+	case Keys:
+		msg = new(MsgKeys)
+
 	default:
-		return nil, fmt.Errorf("Unexpected message: %s", MsgType(hdr[0]))
+		return nil, fmt.Errorf("protocol: unexpected message: %s",
+			MsgType(hdr[0]))
 	}
 
 	len := binary.BigEndian.Uint32(hdr[1:5])

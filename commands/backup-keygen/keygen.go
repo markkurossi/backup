@@ -9,14 +9,12 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os/user"
-	"syscall"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/markkurossi/backup/lib/util"
 )
 
 func main() {
@@ -38,28 +36,10 @@ func main() {
 			storage.Dir, err)
 	}
 
-	var passphrase []byte
-
-	for {
-		fmt.Print("Enter passphrase for the identity key: ")
-		first, err := terminal.ReadPassword(int(syscall.Stdin))
-		if err != nil {
-			fmt.Printf("\n%s\n", err)
-			return
-		}
-		fmt.Print("\nEnter same passphrase again: ")
-		second, err := terminal.ReadPassword(int(syscall.Stdin))
-		if err != nil {
-			fmt.Printf("\n%s\n", err)
-			return
-		}
-		if !bytes.Equal(first, second) {
-			fmt.Print("\nPassphrases do not match\n")
-			continue
-		}
-		fmt.Print("\n")
-		passphrase = first
-		break
+	passphrase, err := util.ReadPassphrase("Enter passphrase for the key", true)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		return
 	}
 
 	err = storage.Save(key, passphrase)

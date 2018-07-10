@@ -31,7 +31,7 @@ func TestRSA(t *testing.T) {
 		t.Fatalf("Failed to encrypt data: %v", err)
 	}
 
-	decrypted, err := Decrypt(passphrase, encrypted)
+	decrypted, err := Decrypt(encrypted, passphrase)
 	if err != nil {
 		t.Fatalf("Failed to decrypt data: %v", err)
 	}

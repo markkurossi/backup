@@ -18,6 +18,11 @@ import (
 	"syscall"
 
 	"github.com/markkurossi/backup/lib/agent"
+	"github.com/markkurossi/backup/lib/crypto/identity"
+)
+
+var (
+	identities []identity.Key
 )
 
 func main() {
@@ -58,7 +63,40 @@ func main() {
 func handleConnection(c *agent.Connection) {
 	for msg := range c.C {
 		log.Printf("Message: %v\n", msg)
-		switch msg.(type) {
+		switch m := msg.(type) {
+		case *agent.MsgAddKey:
+			key, err := identity.Unmarshal(m.Data)
+			if err != nil {
+				txt := fmt.Sprintf("Invalid key data: %s", err)
+				log.Printf("%s\n", txt)
+				c.SendError(txt)
+			} else {
+				// Do we already have this key?
+				var found bool
+				for _, k := range identities {
+					if k.ID() == key.ID() {
+						found = true
+						break
+					}
+				}
+				if !found {
+					identities = append(identities, key)
+				}
+				c.SendOK()
+			}
+
+		case *agent.MsgListKeys:
+			var keys []agent.KeyInfo
+			for _, key := range identities {
+				keys = append(keys, agent.KeyInfo{
+					Name: key.Name(),
+					Type: key.Type(),
+					Size: key.Size(),
+					ID:   key.ID(),
+				})
+			}
+			c.SendKeys(keys)
+
 		default:
 			txt := fmt.Sprintf("Unsupported client message '%s'", msg.Type())
 			log.Printf("%s\n", txt)

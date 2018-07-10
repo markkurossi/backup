@@ -12,6 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+
+	"github.com/markkurossi/backup/lib/crypto/identity"
 )
 
 type Client struct {
@@ -29,8 +31,34 @@ func NewClient(path string) (*Client, error) {
 	}, nil
 }
 
+func (c *Client) AddKey(key identity.Key) error {
+	data, err := key.Marshal()
+	if err != nil {
+		return err
+	}
+	msg, err := RPC(c.conn, &MsgAddKey{
+		MsgHdr: MsgHdr{
+			t: AddKey,
+		},
+		Data: data,
+	})
+	if err != nil {
+		return err
+	}
+	switch m := msg.(type) {
+	case *MsgError:
+		return errors.New(m.Message)
+
+	case *MsgOK:
+		return nil
+
+	default:
+		return fmt.Errorf("Unsupported agent message '%s'", msg.Type())
+	}
+}
+
 func (c *Client) ListKeys() ([]KeyInfo, error) {
-	err := SendMessage(c.conn, &MsgListKeys{
+	msg, err := RPC(c.conn, &MsgListKeys{
 		MsgHdr: MsgHdr{
 			t: ListKeys,
 		},
@@ -38,18 +66,14 @@ func (c *Client) ListKeys() ([]KeyInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := ReceiveMessage(c.conn)
-	if err != nil {
-		return nil, err
-	}
 	switch m := msg.(type) {
 	case *MsgError:
 		return nil, errors.New(m.Message)
 
+	case *MsgKeys:
+		return m.Keys, nil
+
 	default:
 		return nil, fmt.Errorf("Unsupported agent message '%s'", msg.Type())
 	}
-
-	fmt.Printf("Message: %s\n", msg)
-	return nil, nil
 }

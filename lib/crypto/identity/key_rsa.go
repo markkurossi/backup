@@ -32,6 +32,14 @@ func (key *rsaPrivateKey) Name() string {
 	return key.name
 }
 
+func (key *rsaPrivateKey) Type() KeyType {
+	return KeyRSAPrivateKey
+}
+
+func (key *rsaPrivateKey) Size() int {
+	return key.private.PublicKey.N.BitLen()
+}
+
 func (key *rsaPrivateKey) ID() string {
 	return keyID(&key.private.PublicKey)
 }
@@ -64,6 +72,14 @@ type rsaPublicKey struct {
 
 func (key *rsaPublicKey) Name() string {
 	return key.name
+}
+
+func (key *rsaPublicKey) Type() KeyType {
+	return KeyRSAPublicKey
+}
+
+func (key *rsaPublicKey) Size() int {
+	return key.public.N.BitLen()
 }
 
 func (key *rsaPublicKey) ID() string {
