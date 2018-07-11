@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/lib/encoding"
-	"github.com/markkurossi/backup/storage"
+	"github.com/markkurossi/backup/lib/storage"
 )
 
 type Directory struct {

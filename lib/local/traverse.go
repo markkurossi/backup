@@ -14,8 +14,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/markkurossi/backup/storage"
-	"github.com/markkurossi/backup/tree"
+	"github.com/markkurossi/backup/lib/storage"
+	"github.com/markkurossi/backup/lib/tree"
 )
 
 const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |

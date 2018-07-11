@@ -11,8 +11,8 @@ package remote
 import (
 	"fmt"
 
-	"github.com/markkurossi/backup/storage"
-	"github.com/markkurossi/backup/tree"
+	"github.com/markkurossi/backup/lib/storage"
+	"github.com/markkurossi/backup/lib/tree"
 )
 
 func List(root *storage.ID, st storage.Accessor) error {

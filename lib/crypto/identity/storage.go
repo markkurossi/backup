@@ -23,7 +23,7 @@ import (
 
 func NewStorage(user *user.User) *Storage {
 	return &Storage{
-		Dir: fmt.Sprintf("%s/.backup/identities", user.HomeDir),
+		Dir: fmt.Sprintf("%s/.backup.d/identities", user.HomeDir),
 	}
 }
 

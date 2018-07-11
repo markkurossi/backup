@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/markkurossi/backup/local"
-	"github.com/markkurossi/backup/remote"
-	"github.com/markkurossi/backup/storage"
+	"github.com/markkurossi/backup/lib/local"
+	"github.com/markkurossi/backup/lib/remote"
+	"github.com/markkurossi/backup/lib/storage"
 )
 
 func main() {
