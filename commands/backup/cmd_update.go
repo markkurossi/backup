@@ -1,5 +1,5 @@
 //
-// cmd_init.go
+// cmd_update.go
 //
 // Copyright (c) 2018 Markku Rossi
 //
@@ -17,7 +17,7 @@ import (
 	"github.com/markkurossi/backup/lib/zone"
 )
 
-func cmdInit() {
+func cmdUpdate() {
 	debug := flag.Bool("d", false, "Enable debugging.")
 	flag.Parse()
 
@@ -36,28 +36,22 @@ func cmdInit() {
 		fmt.Printf("No identity keys defined\n")
 		os.Exit(1)
 	}
-	// XXX select the default key
-	key := keys[0]
 
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Printf("Failed to get current working directory: %s\n", err)
 		os.Exit(1)
 	}
-	root, err := local.InitRoot(wd)
+	root, err := local.OpenRoot(wd)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
 
-	z, err := zone.Create(root, "default")
+	z, err := zone.Open(root, "default", keys)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
 	}
-	err = z.AddIdentity(key.PublicKey())
-	if err != nil {
-		fmt.Printf("Failed to add identity key: %s\n", err)
-		os.Exit(1)
-	}
+	fmt.Printf("Zone '%s' opened\n", z.Name)
 }

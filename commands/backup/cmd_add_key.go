@@ -13,10 +13,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"os/user"
 
-	"github.com/markkurossi/backup/lib/agent"
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/util"
 )
@@ -26,30 +24,12 @@ const (
 )
 
 func cmdAddKey() {
-	address := flag.String("a", "", "Agent UNIX-domain socket address.")
 	addAll := flag.Bool("A", false,
 		"Add all identities from your identity storage.")
 	list := flag.Bool("l", false, "List all keys stored in key agent.")
 	flag.Parse()
 
-	var path string
-
-	if len(*address) == 0 {
-		var ok bool
-		path, ok = os.LookupEnv(sockEnv)
-		if !ok {
-			log.Fatalf("Agent socket environment variable %s not set\n",
-				sockEnv)
-		}
-	} else {
-		path = *address
-	}
-
-	client, err := agent.NewClient(path)
-	if err != nil {
-		fmt.Printf("Failed to connect to agent '%s': %s\n", path, err)
-		return
-	}
+	connectAgent()
 
 	if *list {
 		keys, err := client.ListKeys()

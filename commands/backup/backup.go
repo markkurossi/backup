@@ -12,16 +12,46 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/markkurossi/backup/lib/agent"
 )
 
 var commands = map[string]func(){
 	"init":    cmdInit,
+	"update":  cmdUpdate,
 	"keygen":  cmdKeygen,
 	"add-key": cmdAddKey,
 }
 
+var address = flag.String("a", "", "Agent UNIX-domain socket address.")
+var verbose = flag.Bool("v", false, "Enable verbose output.")
+
+var client *agent.Client
+
+func connectAgent() {
+	var path string
+	var err error
+
+	if len(*address) == 0 {
+		var ok bool
+		path, ok = os.LookupEnv(sockEnv)
+		if !ok {
+			fmt.Printf("Agent socket environment variable %s not set\n",
+				sockEnv)
+			os.Exit(1)
+		}
+	} else {
+		path = *address
+	}
+
+	client, err = agent.NewClient(path)
+	if err != nil {
+		fmt.Printf("Failed to connect to agent '%s': %s\n", path, err)
+		os.Exit(1)
+	}
+}
+
 func main() {
-	verbose := flag.Bool("v", false, "Enable verbose output.")
 	flag.Parse()
 
 	if *verbose {
