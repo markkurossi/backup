@@ -69,6 +69,7 @@ func main() {
 	fn, ok := commands[flag.Arg(0)]
 	if !ok {
 		fmt.Printf("Unknown command: %s\n", flag.Arg(0))
+		os.Exit(1)
 	}
 	flag.CommandLine = flag.NewFlagSet(fmt.Sprintf("backup %s", os.Args[0]),
 		flag.ExitOnError)

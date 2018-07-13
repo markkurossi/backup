@@ -17,10 +17,23 @@ import (
 	"github.com/markkurossi/backup/lib/local"
 )
 
+var zoneDirs = []string{
+	"identities",
+	"objects",
+}
+
 type Zone struct {
 	secret []byte
 	local  *local.Root
 	Name   string
+}
+
+func (zone *Zone) identities() string {
+	return fmt.Sprintf("%s/identities", zone.Name)
+}
+
+func (zone *Zone) objects() string {
+	return fmt.Sprintf("%s/objects", zone.Name)
 }
 
 func (zone *Zone) AddIdentity(key identity.PublicKey) error {
@@ -28,7 +41,7 @@ func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	if err != nil {
 		return err
 	}
-	return zone.local.Add(zone.Name, key.ID(), encrypted)
+	return zone.local.Add(zone.identities(), key.ID(), encrypted)
 }
 
 func Create(local *local.Root, name string) (*Zone, error) {
@@ -36,6 +49,14 @@ func Create(local *local.Root, name string) (*Zone, error) {
 	if _, err := io.ReadFull(rand.Reader, secret); err != nil {
 		return nil, err
 	}
+
+	for _, dir := range zoneDirs {
+		err := local.Mkdir(fmt.Sprintf("%s/%s", name, dir))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &Zone{
 		secret: secret,
 		local:  local,
@@ -46,8 +67,13 @@ func Create(local *local.Root, name string) (*Zone, error) {
 func Open(local *local.Root, name string, keys []identity.PrivateKey) (
 	*Zone, error) {
 
+	zone := &Zone{
+		local: local,
+		Name:  name,
+	}
+
 	// Get zone identities.
-	identities, err := local.GetAll(name)
+	identities, err := local.GetAll(zone.identities())
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +88,9 @@ func Open(local *local.Root, name string, keys []identity.PrivateKey) (
 		if err != nil {
 			continue
 		}
+		zone.secret = secret
 
-		return &Zone{
-			secret: secret,
-			local:  local,
-			Name:   name,
-		}, nil
+		return zone, nil
 	}
 	return nil, fmt.Errorf("No key to open zone '%s'", name)
 }

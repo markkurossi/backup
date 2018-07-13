@@ -18,10 +18,6 @@ const (
 	BackupDir = ".backup"
 )
 
-var subdirs = []string{
-	"zones",
-}
-
 type Root struct {
 	Root string
 	Meta string
@@ -34,11 +30,13 @@ func newRoot(path string) *Root {
 	}
 }
 
+func (root *Root) Mkdir(dir string) error {
+	d := fmt.Sprintf("%s/%s", root.Meta, dir)
+	return os.MkdirAll(d, 0755)
+}
+
 func (root *Root) Add(namespace, key string, value []byte) error {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
-	if err := os.Mkdir(dir, 0755); err != nil {
-		return err
-	}
 	path := fmt.Sprintf("%s/%s", dir, key)
 	return ioutil.WriteFile(path, value, 0644)
 }
@@ -86,13 +84,6 @@ func InitRoot(path string) (*Root, error) {
 	err = os.Mkdir(root.Meta, 0755)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, subdir := range subdirs {
-		err = os.Mkdir(fmt.Sprintf("%s/%s", root.Meta, subdir), 0755)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return root, nil
