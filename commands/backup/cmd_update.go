@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/markkurossi/backup/lib/crypto/zone"
 	"github.com/markkurossi/backup/lib/local"
-	"github.com/markkurossi/backup/lib/zone"
 )
 
 func cmdUpdate() {
@@ -54,4 +54,12 @@ func cmdUpdate() {
 		os.Exit(1)
 	}
 	fmt.Printf("Zone '%s' opened\n", z.Name)
+
+	id, err := local.Traverse(wd, z)
+	if err != nil {
+		fmt.Printf("Failed to traverse directory '%s': %s\n", wd, err)
+	}
+	if id != nil {
+		fmt.Printf("Tree ID: %s\n", id.ToFullString())
+	}
 }

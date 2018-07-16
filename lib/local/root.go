@@ -23,19 +23,18 @@ type Root struct {
 	Meta string
 }
 
-func newRoot(path string) *Root {
-	return &Root{
-		Root: path,
-		Meta: fmt.Sprintf("%s/%s", path, BackupDir),
-	}
-}
-
 func (root *Root) Mkdir(dir string) error {
 	d := fmt.Sprintf("%s/%s", root.Meta, dir)
 	return os.MkdirAll(d, 0755)
 }
 
-func (root *Root) Add(namespace, key string, value []byte) error {
+func (root *Root) Get(namespace, key string) ([]byte, error) {
+	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
+	path := fmt.Sprintf("%s/%s", dir, key)
+	return ioutil.ReadFile(path)
+}
+
+func (root *Root) Set(namespace, key string, value []byte) error {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	path := fmt.Sprintf("%s/%s", dir, key)
 	return ioutil.WriteFile(path, value, 0644)
@@ -98,4 +97,11 @@ func OpenRoot(path string) (*Root, error) {
 	}
 
 	return root, nil
+}
+
+func newRoot(path string) *Root {
+	return &Root{
+		Root: path,
+		Meta: fmt.Sprintf("%s/%s", path, BackupDir),
+	}
 }

@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/markkurossi/backup/lib/crypto/zone"
 	"github.com/markkurossi/backup/lib/local"
-	"github.com/markkurossi/backup/lib/zone"
 )
 
 func cmdInit() {

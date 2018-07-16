@@ -14,13 +14,16 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/lib/agent"
+	"github.com/markkurossi/backup/lib/crypto/zone"
+	"github.com/markkurossi/backup/lib/local"
 )
 
 var commands = map[string]func(){
-	"init":    cmdInit,
-	"update":  cmdUpdate,
-	"keygen":  cmdKeygen,
 	"add-key": cmdAddKey,
+	"init":    cmdInit,
+	"keygen":  cmdKeygen,
+	"ls":      cmdLs,
+	"update":  cmdUpdate,
 }
 
 var address = flag.String("a", "", "Agent UNIX-domain socket address.")
@@ -49,6 +52,39 @@ func connectAgent() {
 		fmt.Printf("Failed to connect to agent '%s': %s\n", path, err)
 		os.Exit(1)
 	}
+}
+
+func openZone(name string) *zone.Zone {
+	connectAgent()
+
+	keys, err := client.ListKeys()
+	if err != nil {
+		fmt.Printf("Failed to get identity keys: %s\n", err)
+		os.Exit(1)
+	}
+	if len(keys) == 0 {
+		fmt.Printf("No identity keys defined\n")
+		os.Exit(1)
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Printf("Failed to get current working directory: %s\n", err)
+		os.Exit(1)
+	}
+	root, err := local.OpenRoot(wd)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
+
+	z, err := zone.Open(root, "default", keys)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		os.Exit(1)
+	}
+
+	return z
 }
 
 func main() {

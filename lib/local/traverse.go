@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/markkurossi/backup/lib/storage"
 	"github.com/markkurossi/backup/lib/tree"
@@ -20,6 +21,14 @@ import (
 
 const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |
 	os.ModeSocket | os.ModeCharDevice
+
+var ignores = map[string]string{
+	".backup":   "Backup info directory",
+	".DS_Store": "macOS Desktop Services Store",
+}
+var ignoreSuffixes = []string{
+	"~",
+}
 
 func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 	fileInfo, err := os.Lstat(root)
@@ -29,6 +38,18 @@ func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 	mode := fileInfo.Mode()
 	if (mode & SpecialMask) != 0 {
 		return nil, nil
+	}
+
+	// Check system ignores.
+	name := fileInfo.Name()
+	_, ok := ignores[name]
+	if ok {
+		return nil, nil
+	}
+	for _, suffix := range ignoreSuffixes {
+		if strings.HasSuffix(name, suffix) {
+			return nil, nil
+		}
 	}
 
 	if (mode & os.ModeDir) != 0 {
