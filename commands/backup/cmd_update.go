@@ -11,9 +11,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 
-	"github.com/markkurossi/backup/lib/crypto/zone"
 	"github.com/markkurossi/backup/lib/local"
 )
 
@@ -25,39 +23,12 @@ func cmdUpdate() {
 		fmt.Printf("Debugging enabled\n")
 	}
 
-	connectAgent()
-
-	keys, err := client.ListKeys()
-	if err != nil {
-		fmt.Printf("Failed to get identity keys: %s\n", err)
-		os.Exit(1)
-	}
-	if len(keys) == 0 {
-		fmt.Printf("No identity keys defined\n")
-		os.Exit(1)
-	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Printf("Failed to get current working directory: %s\n", err)
-		os.Exit(1)
-	}
-	root, err := local.OpenRoot(wd)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
-	}
-
-	z, err := zone.Open(root, "default", keys)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
-	}
+	z := openZone("default")
 	fmt.Printf("Zone '%s' opened\n", z.Name)
 
-	id, err := local.Traverse(wd, z)
+	id, err := local.Traverse(z.Root(), z)
 	if err != nil {
-		fmt.Printf("Failed to traverse directory '%s': %s\n", wd, err)
+		fmt.Printf("Failed to traverse directory '%s': %s\n", z.Root(), err)
 	}
 	if id != nil {
 		fmt.Printf("Tree ID: %s\n", id.ToFullString())

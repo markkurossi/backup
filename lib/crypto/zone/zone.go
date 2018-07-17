@@ -43,6 +43,10 @@ type Zone struct {
 	hmac   hash.Hash
 }
 
+func (zone *Zone) Root() string {
+	return zone.local.Root
+}
+
 func (zone *Zone) identities() string {
 	return fmt.Sprintf("%s/identities", zone.Name)
 }
