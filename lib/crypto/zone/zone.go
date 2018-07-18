@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	suite = SuiteAES128CBCHMACSHA256
+	suite = AES256CBCHMACSHA256
 )
 
 var zoneDirs = []string{
@@ -116,14 +116,20 @@ func (zone *Zone) init(secret []byte, suite Suite) error {
 	zone.secret = secret
 	zone.suite = suite
 
+	split1 := suite.IDHashKeyLen()
+	split2 := split1 + suite.CipherKeyLen()
+
 	switch suite {
-	case SuiteAES128CBCHMACSHA256:
-		block, err := aes.NewCipher(secret[:suite.CipherKeyLen()])
+	case AES256CBCHMACSHA256:
+		zone.idHash = hmac.New(sha256.New, secret[:split1])
+
+		block, err := aes.NewCipher(secret[split1:split2])
 		if err != nil {
 			return err
 		}
 		zone.cipher = block
-		zone.hmac = hmac.New(sha256.New, secret[suite.CipherKeyLen():])
+
+		zone.hmac = hmac.New(sha256.New, secret[split2:])
 
 	default:
 		return fmt.Errorf("Unsupported suite: %s", suite)
@@ -208,9 +214,8 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 
 func newZone(name string, local *local.Root) *Zone {
 	return &Zone{
-		Name:   name,
-		local:  local,
-		idHash: sha256.New(),
+		Name:  name,
+		local: local,
 	}
 }
 

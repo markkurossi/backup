@@ -22,6 +22,14 @@ func (s Suite) String() string {
 	return fmt.Sprintf("{Suite %d}", s)
 }
 
+func (s Suite) IDHashKeyLen() int {
+	len, ok := suiteIDHashKeyLengths[s]
+	if !ok {
+		panic(fmt.Sprintf("Unknown suite: %d", s))
+	}
+	return len
+}
+
 func (s Suite) CipherKeyLen() int {
 	len, ok := suiteCipherKeyLengths[s]
 	if !ok {
@@ -39,21 +47,25 @@ func (s Suite) HMACKeyLen() int {
 }
 
 func (s Suite) KeyLen() int {
-	return s.CipherKeyLen() + s.HMACKeyLen()
+	return s.IDHashKeyLen() + s.CipherKeyLen() + s.HMACKeyLen()
 }
 
 const (
-	SuiteAES128CBCHMACSHA256 Suite = 0
+	AES256CBCHMACSHA256 Suite = 0
 )
 
 var suites = map[Suite]string{
-	SuiteAES128CBCHMACSHA256: "AES128-CBC-HMAC-SHA256",
+	AES256CBCHMACSHA256: "AES256-CBC-HMAC-SHA256",
+}
+
+var suiteIDHashKeyLengths = map[Suite]int{
+	AES256CBCHMACSHA256: 32,
 }
 
 var suiteCipherKeyLengths = map[Suite]int{
-	SuiteAES128CBCHMACSHA256: 16,
+	AES256CBCHMACSHA256: 32,
 }
 
 var suiteHMACKeyLengths = map[Suite]int{
-	SuiteAES128CBCHMACSHA256: 32,
+	AES256CBCHMACSHA256: 32,
 }
