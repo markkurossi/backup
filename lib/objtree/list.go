@@ -6,7 +6,7 @@
 // All rights reserved.
 //
 
-package remote
+package objtree
 
 import (
 	"fmt"

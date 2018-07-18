@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/markkurossi/backup/lib/remote"
+	"github.com/markkurossi/backup/lib/objtree"
 	"github.com/markkurossi/backup/lib/storage"
 )
 
@@ -39,7 +39,7 @@ func cmdLs() {
 	z := openZone("default")
 	fmt.Printf("Zone '%s' opened\n", z.Name)
 
-	err = remote.List(id, z)
+	err = objtree.List(id, z)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 	}
