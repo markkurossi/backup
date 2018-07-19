@@ -24,13 +24,13 @@ func NewNull() *Null {
 	}
 }
 
-func (n *Null) Write(data []byte) (*ID, error) {
+func (n *Null) Write(data []byte) (ID, error) {
 	n.h.Reset()
 	n.h.Write(data)
 
 	return NewID(n.h.Sum(nil)), nil
 }
 
-func (n *Null) Read(id *ID) ([]byte, error) {
+func (n *Null) Read(id ID) ([]byte, error) {
 	return nil, fmt.Errorf("Data not found")
 }

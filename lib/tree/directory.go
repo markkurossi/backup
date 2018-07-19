@@ -37,7 +37,7 @@ func (d *Directory) File() File {
 }
 
 func (d *Directory) Add(name string, mode os.FileMode, modTime int64,
-	entry *storage.ID) {
+	entry storage.ID) {
 	d.Entries = append(d.Entries, DirectoryEntry{
 		Name:    name,
 		Mode:    mode,
@@ -59,5 +59,5 @@ type DirectoryEntry struct {
 	Name    string
 	Mode    os.FileMode
 	ModTime int64
-	Entry   *storage.ID
+	Entry   storage.ID
 }

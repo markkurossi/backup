@@ -75,7 +75,7 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 	return read, nil
 }
 
-func (c *ChunkedFile) Add(size int64, chunk *storage.ID) {
+func (c *ChunkedFile) Add(size int64, chunk storage.ID) {
 	c.Chunks = append(c.Chunks, Chunk{
 		Size:    size,
 		Content: chunk,
@@ -94,5 +94,5 @@ func NewChunkedFile(size int64) *ChunkedFile {
 
 type Chunk struct {
 	Size    int64
-	Content *storage.ID
+	Content storage.ID
 }

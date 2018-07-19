@@ -38,30 +38,30 @@ func NewFile(root string) (*File, error) {
 	}, nil
 }
 
-func (f *File) Write(data []byte) (*ID, error) {
+func (f *File) Write(data []byte) (id ID, err error) {
 	f.h.Reset()
 	f.h.Write(data)
 
-	id := NewID(f.h.Sum(nil))
-	err := f.makeDirTree(id)
+	id = NewID(f.h.Sum(nil))
+	err = f.makeDirTree(id)
 	if err != nil {
-		return nil, err
+		return
 	}
 	path, err := f.makeFilename(id)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	err = ioutil.WriteFile(path, data, 0644)
 	if err != nil {
 		os.Remove(path)
-		return nil, err
+		return
 	}
 
-	return id, nil
+	return
 }
 
-func (f *File) Read(id *ID) ([]byte, error) {
+func (f *File) Read(id ID) ([]byte, error) {
 	path, err := f.makeFilename(id)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (f *File) Read(id *ID) ([]byte, error) {
 	return ioutil.ReadFile(path)
 }
 
-func (f *File) makeFilename(id *ID) (string, error) {
+func (f *File) makeFilename(id ID) (string, error) {
 	if len(id.Data) < 2 {
 		return "", fmt.Errorf("Invalid ID: %s", id)
 	}
@@ -77,7 +77,7 @@ func (f *File) makeFilename(id *ID) (string, error) {
 		f.root, id.Data[:1], id.Data[1:2], id.Data[2:]), nil
 }
 
-func (f *File) makeDirTree(id *ID) error {
+func (f *File) makeDirTree(id ID) error {
 	if len(id.Data) < 2 {
 		return fmt.Errorf("Invalid ID: %s", id)
 	}

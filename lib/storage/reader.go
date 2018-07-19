@@ -9,5 +9,5 @@
 package storage
 
 type Reader interface {
-	Read(id *ID) ([]byte, error)
+	Read(id ID) ([]byte, error)
 }

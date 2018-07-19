@@ -14,26 +14,26 @@ import (
 
 type Type uint8
 
+var typeNames = map[Type]string{
+	TypeSimpleFile:  "simple-file",
+	TypeChunkedFile: "chunked-file",
+	TypeDirectory:   "directory",
+	TypeSnapshot:    "snapshot",
+}
+
 func (t Type) String() string {
-	switch t {
-	case TypeSimpleFile:
-		return "simple-file"
-
-	case TypeChunkedFile:
-		return "chunked-file"
-
-	case TypeDirectory:
-		return "directory"
-
-	default:
-		return fmt.Sprintf("{Type %d}", t)
+	name, ok := typeNames[t]
+	if ok {
+		return name
 	}
+	return fmt.Sprintf("{Type %d}", t)
 }
 
 const (
-	TypeSimpleFile Type = iota
+	TypeSimpleFile Type = iota + 1
 	TypeChunkedFile
 	TypeDirectory
+	TypeSnapshot
 )
 
 type Version uint8

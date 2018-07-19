@@ -34,7 +34,7 @@ type Element interface {
 	File() File
 }
 
-func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
+func Deserialize(id storage.ID, st storage.Accessor) (Element, error) {
 	data, err := st.Read(id)
 	if err != nil {
 		return nil, err
@@ -54,6 +54,9 @@ func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
 
 	case TypeDirectory:
 		element = new(Directory)
+
+	case TypeSnapshot:
+		element = new(Snapshot)
 
 	default:
 		return nil, fmt.Errorf("Unsupported tree element type %s", elementType)

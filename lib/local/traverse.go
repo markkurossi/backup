@@ -30,42 +30,45 @@ var ignoreSuffixes = []string{
 	"~",
 }
 
-func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
+func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 	fileInfo, err := os.Lstat(root)
 	if err != nil {
-		return nil, err
+		return
 	}
 	mode := fileInfo.Mode()
 	if (mode & SpecialMask) != 0 {
-		return nil, nil
+		return
 	}
 
 	// Check system ignores.
 	name := fileInfo.Name()
 	_, ok := ignores[name]
 	if ok {
-		return nil, nil
+		return
 	}
 	for _, suffix := range ignoreSuffixes {
 		if strings.HasSuffix(name, suffix) {
-			return nil, nil
+			return
 		}
 	}
 
+	var data []byte
+
 	if (mode & os.ModeDir) != 0 {
-		files, err := ioutil.ReadDir(root)
+		var files []os.FileInfo
+		files, err = ioutil.ReadDir(root)
 		if err != nil {
-			return nil, err
+			return
 		}
 
 		dir := tree.NewDirectory()
 
 		for _, f := range files {
-			id, err := Traverse(fmt.Sprintf("%s/%s", root, f.Name()), writer)
+			id, err = Traverse(fmt.Sprintf("%s/%s", root, f.Name()), writer)
 			if err != nil {
-				return nil, err
+				return
 			}
-			if id == nil {
+			if id.Undefined() {
 				// Unsupported file type.
 				continue
 			}
@@ -79,27 +82,28 @@ func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 			dir.Add(f.Name(), f.Mode(), f.ModTime().Unix(), id)
 		}
 
-		data, err := dir.Serialize()
+		data, err = dir.Serialize()
 		if err != nil {
-			return nil, err
+			return
 		}
 		return writer.Write(data)
 	} else {
 		if fileInfo.Size() < 1024*1024 {
-			data, err := ioutil.ReadFile(root)
+			data, err = ioutil.ReadFile(root)
 			if err != nil {
-				return nil, err
+				return
 			}
 			file := tree.NewSimpleFile(data)
 			data, err = file.Serialize()
 			if err != nil {
-				return nil, err
+				return
 			}
 			return writer.Write(data)
 		} else {
-			file, err := os.Open(root)
+			var file *os.File
+			file, err = os.Open(root)
 			if err != nil {
-				return nil, err
+				return
 			}
 			defer file.Close()
 
@@ -107,23 +111,25 @@ func Traverse(root string, writer storage.Writer) (*storage.ID, error) {
 			cf := tree.NewChunkedFile(fileInfo.Size())
 
 			for {
-				read, err := file.Read(buf)
+				var read int
+
+				read, err = file.Read(buf)
 				if read == 0 {
 					if err != io.EOF {
-						return nil, err
+						return
 					}
 					break
 				}
-				id, err := writer.Write(buf[:read])
+				id, err = writer.Write(buf[:read])
 				if err != nil {
-					return nil, err
+					return
 				}
 				cf.Add(int64(read), id)
 			}
 
-			data, err := cf.Serialize()
+			data, err = cf.Serialize()
 			if err != nil {
-				return nil, err
+				return
 			}
 			return writer.Write(data)
 		}

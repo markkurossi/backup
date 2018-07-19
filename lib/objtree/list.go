@@ -10,12 +10,13 @@ package objtree
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/markkurossi/backup/lib/storage"
 	"github.com/markkurossi/backup/lib/tree"
 )
 
-func List(root *storage.ID, st storage.Accessor) error {
+func List(root storage.ID, st storage.Accessor) error {
 	return list("", true, root, st)
 }
 
@@ -27,16 +28,25 @@ func nest(indent string, isLast bool) string {
 	}
 }
 
-func list(indent string, verbose bool, root *storage.ID,
+func list(indent string, verbose bool, root storage.ID,
 	st storage.Accessor) error {
 	element, err := tree.Deserialize(root, st)
 	if err != nil {
+		fmt.Printf("Failed to deserialize ID %s: %s\n", root, err)
 		return err
 	}
 
-	if element.IsDir() {
-		count := len(element.Directory().Entries)
-		for idx, e := range element.Directory().Entries {
+	switch el := element.(type) {
+	case *tree.Snapshot:
+		fmt.Printf("Snapshot %s\n", root)
+		fmt.Printf("|-- Created: %s\n", time.Unix(el.Timestamp, 0))
+		fmt.Printf("|-- Parent : %s\n", el.Parent)
+		fmt.Printf("`-- Root   : %s\n", el.Root)
+		return list(indent+"    ", verbose, el.Root, st)
+
+	case *tree.Directory:
+		count := len(el.Entries)
+		for idx, e := range el.Entries {
 			var in string
 			var isLast bool
 			if idx+1 == count {

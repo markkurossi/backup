@@ -9,5 +9,5 @@
 package storage
 
 type Writer interface {
-	Write(data []byte) (*ID, error)
+	Write(data []byte) (ID, error)
 }

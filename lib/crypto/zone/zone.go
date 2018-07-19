@@ -24,6 +24,7 @@ import (
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/local"
 	"github.com/markkurossi/backup/lib/storage"
+	"github.com/markkurossi/backup/lib/tree"
 )
 
 const (
@@ -37,7 +38,9 @@ var zoneDirs = []string{
 
 type Zone struct {
 	Name    string
-	local   *local.Root
+	Local   *local.Root
+	Head    *tree.Snapshot
+	HeadID  storage.ID
 	idHash  hash.Hash
 	secret  []byte
 	suite   Suite
@@ -47,15 +50,11 @@ type Zone struct {
 	Saved   uint64
 }
 
-func (zone *Zone) Root() string {
-	return zone.local.Root
-}
-
 func (zone *Zone) identities() string {
 	return fmt.Sprintf("%s/identities", zone.Name)
 }
 
-func (zone *Zone) objectNames(id *storage.ID) (string, string) {
+func (zone *Zone) objectNames(id storage.ID) (string, string) {
 	ns := fmt.Sprintf("%s/objects/%x/%x", zone.Name, id.Data[:1], id.Data[1:2])
 	key := fmt.Sprintf("%x", id.Data[2:])
 
@@ -71,14 +70,14 @@ func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	if err != nil {
 		return err
 	}
-	return zone.local.Set(zone.identities(), key.ID(), encrypted)
+	return zone.Local.Set(zone.identities(), key.ID(), encrypted)
 }
 
 // Read ipmlements the storage.Reader interface.
-func (zone *Zone) Read(id *storage.ID) ([]byte, error) {
+func (zone *Zone) Read(id storage.ID) ([]byte, error) {
 	namespace, key := zone.objectNames(id)
 
-	data, err := zone.local.Get(namespace, key)
+	data, err := zone.Local.Get(namespace, key)
 	if err != nil {
 		return nil, err
 	}
@@ -87,29 +86,30 @@ func (zone *Zone) Read(id *storage.ID) ([]byte, error) {
 }
 
 // Write implements the storage.Writer interface.
-func (zone *Zone) Write(data []byte) (*storage.ID, error) {
+func (zone *Zone) Write(data []byte) (id storage.ID, err error) {
 	zone.idHash.Reset()
 	zone.idHash.Write(data)
 
-	id := storage.NewID(zone.idHash.Sum(nil))
+	id = storage.NewID(zone.idHash.Sum(nil))
 
 	namespace, key := zone.objectNames(id)
-	err := zone.local.Mkdir(namespace)
+	err = zone.Local.Mkdir(namespace)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	encrypted, err := zone.encrypt(data)
+	var encrypted []byte
+	encrypted, err = zone.encrypt(data)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	err = zone.local.Set(namespace, key, encrypted)
+	err = zone.Local.Set(namespace, key, encrypted)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return id, nil
+	return
 }
 
 func (zone *Zone) init(secret []byte, suite Suite) error {
@@ -255,7 +255,7 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 func newZone(name string, local *local.Root) *Zone {
 	return &Zone{
 		Name:  name,
-		local: local,
+		Local: local,
 	}
 }
 
