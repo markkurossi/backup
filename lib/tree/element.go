@@ -44,7 +44,8 @@ func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
 	}
 	var element Element
 
-	switch Type(data[0]) {
+	elementType := Type(data[0])
+	switch elementType {
 	case TypeSimpleFile:
 		element = new(SimpleFile)
 
@@ -55,7 +56,7 @@ func Deserialize(id *storage.ID, st storage.Accessor) (Element, error) {
 		element = new(Directory)
 
 	default:
-		return nil, fmt.Errorf("Unsupported tree element type %s")
+		return nil, fmt.Errorf("Unsupported tree element type %s", elementType)
 	}
 
 	err = encoding.Unmarshal(bytes.NewReader(data), element)
