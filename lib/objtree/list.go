@@ -30,7 +30,7 @@ func nest(indent string, isLast bool) string {
 
 func list(indent string, verbose bool, root storage.ID,
 	st storage.Accessor) error {
-	element, err := tree.Deserialize(root, st)
+	element, err := tree.DeserializeID(root, st)
 	if err != nil {
 		fmt.Printf("Failed to deserialize ID %s: %s\n", root, err)
 		return err
@@ -39,7 +39,7 @@ func list(indent string, verbose bool, root storage.ID,
 	switch el := element.(type) {
 	case *tree.Snapshot:
 		fmt.Printf("Snapshot %s\n", root)
-		fmt.Printf("|-- Created: %s\n", time.Unix(el.Timestamp, 0))
+		fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
 		fmt.Printf("|-- Parent : %s\n", el.Parent)
 		fmt.Printf("`-- Root   : %s\n", el.Root)
 		return list(indent+"    ", verbose, el.Root, st)

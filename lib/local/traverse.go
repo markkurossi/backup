@@ -24,6 +24,7 @@ const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |
 
 var ignores = map[string]string{
 	".backup":   "Backup info directory",
+	".git":      "Git repository",
 	".DS_Store": "macOS Desktop Services Store",
 }
 var ignoreSuffixes = []string{

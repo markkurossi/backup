@@ -50,7 +50,7 @@ func cmdUpdate() {
 	}
 
 	snapshot := tree.NewSnapshot()
-	snapshot.Timestamp = time.Now().Unix()
+	snapshot.Timestamp = time.Now().UnixNano()
 	snapshot.Root = id
 	if z.Head != nil {
 		snapshot.Parent = z.HeadID

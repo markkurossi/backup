@@ -34,11 +34,15 @@ type Element interface {
 	File() File
 }
 
-func Deserialize(id storage.ID, st storage.Accessor) (Element, error) {
+func DeserializeID(id storage.ID, st storage.Accessor) (Element, error) {
 	data, err := st.Read(id)
 	if err != nil {
 		return nil, err
 	}
+	return Deserialize(data, st)
+}
+
+func Deserialize(data []byte, st storage.Accessor) (Element, error) {
 	if len(data) < 1 {
 		return nil, fmt.Errorf("Truncated element data")
 	}
@@ -62,7 +66,7 @@ func Deserialize(id storage.ID, st storage.Accessor) (Element, error) {
 		return nil, fmt.Errorf("Unsupported tree element type %s", elementType)
 	}
 
-	err = encoding.Unmarshal(bytes.NewReader(data), element)
+	err := encoding.Unmarshal(bytes.NewReader(data), element)
 	if err != nil {
 		return nil, err
 	}

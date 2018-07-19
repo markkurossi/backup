@@ -24,13 +24,16 @@ import (
 	"strings"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
+	"github.com/markkurossi/backup/lib/encoding"
 	"github.com/markkurossi/backup/lib/local"
 	"github.com/markkurossi/backup/lib/storage"
 	"github.com/markkurossi/backup/lib/tree"
 )
 
 const (
-	suite = AES256CBCHMACSHA256
+	suite        = AES256CBCHMACSHA256
+	rootPointer  = "RootPointer"
+	rootDistance = 4096
 )
 
 var zoneDirs = []string{
@@ -178,6 +181,122 @@ func (zone *Zone) init(secret []byte, suite Suite) error {
 	default:
 		return fmt.Errorf("Unsupported suite: %s", suite)
 	}
+
+	return nil
+}
+
+func (zone *Zone) getHead() error {
+	data, err := zone.Local.Get(zone.Name, rootPointer)
+	if err != nil {
+		return zone.bruteForceRootPointer()
+	}
+	in := bytes.NewReader(data)
+
+	ptr1 := new(RootPointer)
+	err1 := encoding.Unmarshal(in, ptr1)
+
+	ptr2 := new(RootPointer)
+	var err2 error
+
+	if len(data) > rootDistance {
+		in = bytes.NewReader(data[rootDistance:])
+		err2 = encoding.Unmarshal(in, ptr2)
+	} else {
+		err2 = io.EOF
+	}
+
+	if err1 == nil {
+		err1 = zone.checkRootPointer(ptr1)
+	}
+	if err2 == nil {
+		err2 = zone.checkRootPointer(ptr2)
+	}
+
+	var id storage.ID
+
+	if err1 == nil && err2 == nil {
+		if ptr1.Timestamp > ptr2.Timestamp {
+			id = ptr1.Pointer
+		} else {
+			id = ptr2.Pointer
+		}
+	} else if err1 == nil {
+		id = ptr1.Pointer
+	} else if err2 == nil {
+		id = ptr2.Pointer
+	} else {
+		return zone.bruteForceRootPointer()
+	}
+
+	element, err := tree.DeserializeID(id, zone)
+	if err != nil {
+		return zone.bruteForceRootPointer()
+	}
+	head, ok := element.(*tree.Snapshot)
+	if !ok {
+		return fmt.Errorf("Root is not a snapshot (%T)", element)
+	}
+
+	zone.Head = head
+	zone.HeadID = id
+
+	return nil
+}
+
+func (zone *Zone) checkRootPointer(ptr *RootPointer) error {
+	return fmt.Errorf("checkRootPointer not implemented yet")
+}
+
+func (zone *Zone) bruteForceRootPointer() error {
+	var best *tree.Snapshot
+	var bestID storage.ID
+	var buf [2]byte
+
+	for i := 0; i < 256; i++ {
+		for j := 0; j < 256; j++ {
+			buf[0] = byte(i)
+			buf[1] = byte(j)
+
+			ns, _ := zone.objectNames(storage.NewID(buf[:]))
+			kvs, err := zone.Local.GetAll(ns)
+			if err != nil {
+				continue
+			}
+
+			for k, v := range kvs {
+				data, err := zone.decrypt(v)
+				if err != nil {
+					continue
+				}
+				element, err := tree.Deserialize(data, zone)
+				if err != nil {
+					continue
+				}
+				snapshot, ok := element.(*tree.Snapshot)
+				if ok {
+					if best == nil || snapshot.Timestamp > best.Timestamp {
+
+						idData := []byte{byte(i), byte(j)}
+						suffix, err := hex.DecodeString(k)
+						if err != nil {
+							continue
+						}
+						idData = append(idData, suffix...)
+
+						best = snapshot
+						bestID = storage.NewID(idData)
+					}
+				}
+			}
+		}
+	}
+
+	if best == nil {
+		return fmt.Errorf("No root pointer found from object store")
+	}
+
+	zone.Head = best
+	zone.HeadID = bestID
 
 	return nil
 }
@@ -342,6 +461,12 @@ func Open(local *local.Root, name string, keys []identity.PrivateKey) (
 			continue
 		}
 		err = zone.init(secret, suite)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get head snapshot.
+		err = zone.getHead()
 		if err != nil {
 			return nil, err
 		}
