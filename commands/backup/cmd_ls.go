@@ -14,7 +14,6 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/lib/objtree"
-	"github.com/markkurossi/backup/lib/storage"
 )
 
 func cmdLs() {
@@ -30,14 +29,15 @@ func cmdLs() {
 		fmt.Printf("No tree root ID defined\n")
 		os.Exit(1)
 	}
-	id, err := storage.IDFromString(*root)
+
+	z := openZone("default")
+	fmt.Printf("Zone '%s' opened\n", z.Name)
+
+	id, err := z.ResolveID(*root)
 	if err != nil {
 		fmt.Printf("Invalid tree ID '%s': %s\n", *root, err)
 		os.Exit(1)
 	}
-
-	z := openZone("default")
-	fmt.Printf("Zone '%s' opened\n", z.Name)
 
 	err = objtree.List(id, z)
 	if err != nil {

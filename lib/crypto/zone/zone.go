@@ -16,10 +16,12 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"hash"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/local"
@@ -61,16 +63,54 @@ func (zone *Zone) objectNames(id storage.ID) (string, string) {
 	return ns, key
 }
 
-func (zone *Zone) objects() string {
-	return fmt.Sprintf("%s/objects", zone.Name)
-}
-
 func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	encrypted, err := key.Encrypt(zone.secret)
 	if err != nil {
 		return err
 	}
 	return zone.Local.Set(zone.identities(), key.ID(), encrypted)
+}
+
+func (zone *Zone) ResolveID(idstring string) (id storage.ID, err error) {
+	mid := strings.Index(idstring, "...")
+	if mid < 0 {
+		// No separator, full ID.
+		return storage.IDFromString(idstring)
+	}
+	if mid < 4 {
+		return id, fmt.Errorf("Invalid truncated ID '%s'", idstring)
+	}
+	prefix, err := hex.DecodeString(idstring[:mid])
+	if err != nil {
+		return
+	}
+	suffix, err := hex.DecodeString(idstring[mid+3:])
+	if err != nil {
+		return
+	}
+
+	namespace, _ := zone.objectNames(storage.NewID(prefix))
+	keys, err := zone.Local.GetKeys(namespace)
+	if err != nil {
+		return
+	}
+
+	nsBytes := prefix[:2]
+	prefix = prefix[2:]
+
+	for _, key := range keys {
+		kb, err := hex.DecodeString(key)
+		if err != nil {
+			fmt.Printf("Skipping invalid object key '%s': %s\n", key, err)
+			continue
+		}
+		if bytes.HasPrefix(kb, prefix) && bytes.HasSuffix(kb, suffix) {
+			id.Data = append(id.Data, nsBytes...)
+			id.Data = append(id.Data, kb...)
+			return id, nil
+		}
+	}
+	return id, fmt.Errorf("Invalid ID '%s'", idstring)
 }
 
 // Read ipmlements the storage.Reader interface.

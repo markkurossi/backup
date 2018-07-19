@@ -38,7 +38,7 @@ func cmdUpdate() {
 		fmt.Printf("Zone root '%s' is not a directory\n", z.Local.Root)
 		os.Exit(1)
 	}
-	fmt.Printf("Tree ID: %s\n", id.ToFullString())
+	fmt.Printf("Tree ID: %s\n", id)
 	if z.Written > 0 {
 		fmt.Printf("Data size: %d, saved %d (%.0f%%)\n", z.Written, z.Saved,
 			float64(z.Saved)/float64(z.Written)*100.0)
@@ -70,5 +70,5 @@ func cmdUpdate() {
 	z.Head = snapshot
 	z.HeadID = headID
 
-	fmt.Printf("Snapshot: %s\n", headID.ToFullString())
+	fmt.Printf("Snapshot: %s\n", headID)
 }

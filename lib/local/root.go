@@ -40,6 +40,22 @@ func (root *Root) Set(namespace, key string, value []byte) error {
 	return ioutil.WriteFile(path, value, 0644)
 }
 
+func (root *Root) GetKeys(namespace string) ([]string, error) {
+	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var keys []string
+	for _, fi := range files {
+		if fi.IsDir() {
+			continue
+		}
+		keys = append(keys, fi.Name())
+	}
+	return keys, nil
+}
+
 func (root *Root) GetAll(namespace string) (map[string][]byte, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	files, err := ioutil.ReadDir(dir)
