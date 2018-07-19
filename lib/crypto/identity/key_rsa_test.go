@@ -25,7 +25,7 @@ func TestRSA(t *testing.T) {
 
 	passphrase := []byte("Hello, world!")
 
-	encrypted, err := Encrypt(data, EncrAES128GCM, passphrase,
+	encrypted, err := Encrypt(data, EncrAES128GCM, "key", passphrase,
 		KDFPBKDF24096SHA256)
 	if err != nil {
 		t.Fatalf("Failed to encrypt data: %v", err)
