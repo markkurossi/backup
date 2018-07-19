@@ -10,6 +10,7 @@ package zone
 
 import (
 	"bytes"
+	"compress/zlib"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
@@ -18,6 +19,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"io/ioutil"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/local"
@@ -34,13 +36,15 @@ var zoneDirs = []string{
 }
 
 type Zone struct {
-	Name   string
-	local  *local.Root
-	idHash hash.Hash
-	secret []byte
-	suite  Suite
-	cipher cipher.Block
-	hmac   hash.Hash
+	Name    string
+	local   *local.Root
+	idHash  hash.Hash
+	secret  []byte
+	suite   Suite
+	cipher  cipher.Block
+	hmac    hash.Hash
+	Written uint64
+	Saved   uint64
 }
 
 func (zone *Zone) Root() string {
@@ -138,7 +142,26 @@ func (zone *Zone) init(secret []byte, suite Suite) error {
 	return nil
 }
 
-func (zone *Zone) encrypt(data []byte) ([]byte, error) {
+func (zone *Zone) encrypt(orig []byte) ([]byte, error) {
+	zone.Written += uint64(len(orig))
+
+	// Does it compress?
+	var b bytes.Buffer
+	z := zlib.NewWriter(&b)
+	z.Write(orig)
+	z.Close()
+
+	compressed := b.Bytes()
+	var data []byte
+	if len(compressed) < len(orig) {
+		zone.Saved += uint64(len(orig) - len(compressed))
+		data = append(data, 1)
+		data = append(data, compressed...)
+	} else {
+		data = append(data, 0)
+		data = append(data, orig...)
+	}
+
 	blockSize := zone.cipher.BlockSize()
 
 	var padLen = blockSize - (len(data) % blockSize)
@@ -209,7 +232,24 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("Invalid padding")
 	}
 
-	return toDecrypt[:len(toDecrypt)-padLen], nil
+	decrypted := toDecrypt[:len(toDecrypt)-padLen]
+	if len(decrypted) == 0 {
+		return nil, fmt.Errorf("Truncated data")
+	}
+
+	// Was the data compressed?
+	if decrypted[0] == 0 {
+		// No.
+		return decrypted[1:], nil
+	}
+
+	r, err := zlib.NewReader(bytes.NewReader(decrypted[1:]))
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	return ioutil.ReadAll(r)
 }
 
 func newZone(name string, local *local.Root) *Zone {

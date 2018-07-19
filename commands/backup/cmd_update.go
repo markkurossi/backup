@@ -32,5 +32,9 @@ func cmdUpdate() {
 	}
 	if id != nil {
 		fmt.Printf("Tree ID: %s\n", id.ToFullString())
+		if z.Written > 0 {
+			fmt.Printf("Data size: %d, saved %d (%.0f%%)\n", z.Written, z.Saved,
+				float64(z.Saved)/float64(z.Written)*100.0)
+		}
 	}
 }
