@@ -52,13 +52,10 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 		}
 	}
 
-	var data []byte
-
 	if (mode & os.ModeDir) != 0 {
-		var files []os.FileInfo
-		files, err = ioutil.ReadDir(root)
+		files, err := ioutil.ReadDir(root)
 		if err != nil {
-			return
+			return id, err
 		}
 
 		dir := tree.NewDirectory()
@@ -66,7 +63,7 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 		for _, f := range files {
 			id, err = Traverse(fmt.Sprintf("%s/%s", root, f.Name()), writer)
 			if err != nil {
-				return
+				return id, err
 			}
 			if id.Undefined() {
 				// Unsupported file type.
@@ -82,28 +79,27 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 			dir.Add(f.Name(), f.Mode(), f.ModTime().Unix(), id)
 		}
 
-		data, err = dir.Serialize()
+		data, err := dir.Serialize()
 		if err != nil {
-			return
+			return id, err
 		}
 		return writer.Write(data)
 	} else {
 		if fileInfo.Size() < 1024*1024 {
-			data, err = ioutil.ReadFile(root)
+			data, err := ioutil.ReadFile(root)
 			if err != nil {
-				return
+				return id, err
 			}
 			file := tree.NewSimpleFile(data)
 			data, err = file.Serialize()
 			if err != nil {
-				return
+				return id, err
 			}
 			return writer.Write(data)
 		} else {
-			var file *os.File
-			file, err = os.Open(root)
+			file, err := os.Open(root)
 			if err != nil {
-				return
+				return id, err
 			}
 			defer file.Close()
 
@@ -111,25 +107,23 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 			cf := tree.NewChunkedFile(fileInfo.Size())
 
 			for {
-				var read int
-
-				read, err = file.Read(buf)
+				read, err := file.Read(buf)
 				if read == 0 {
 					if err != io.EOF {
-						return
+						return id, err
 					}
 					break
 				}
 				id, err = writer.Write(buf[:read])
 				if err != nil {
-					return
+					return id, err
 				}
 				cf.Add(int64(read), id)
 			}
 
-			data, err = cf.Serialize()
+			data, err := cf.Serialize()
 			if err != nil {
-				return
+				return id, err
 			}
 			return writer.Write(data)
 		}
