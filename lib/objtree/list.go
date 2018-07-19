@@ -17,7 +17,8 @@ import (
 )
 
 func List(root storage.ID, st storage.Accessor) error {
-	return list("", true, root, st)
+	now := time.Now()
+	return list(now, "", true, root, st)
 }
 
 func nest(indent string, isLast bool) string {
@@ -28,7 +29,7 @@ func nest(indent string, isLast bool) string {
 	}
 }
 
-func list(indent string, verbose bool, root storage.ID,
+func list(now time.Time, indent string, verbose bool, root storage.ID,
 	st storage.Accessor) error {
 	element, err := tree.DeserializeID(root, st)
 	if err != nil {
@@ -42,7 +43,7 @@ func list(indent string, verbose bool, root storage.ID,
 		fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
 		fmt.Printf("|-- Parent : %s\n", el.Parent)
 		fmt.Printf("`-- Root   : %s\n", el.Root)
-		return list(indent+"    ", verbose, el.Root, st)
+		return list(now, indent+"    ", verbose, el.Root, st)
 
 	case *tree.Directory:
 		count := len(el.Entries)
@@ -60,10 +61,17 @@ func list(indent string, verbose bool, root storage.ID,
 				for i := 0; i+len(in)+len(e.Name) < 40; i++ {
 					fmt.Printf(" ")
 				}
-				fmt.Printf("\t%s\t%s", e.Mode, e.Entry)
+				modified := time.Unix(e.ModTime, 0)
+				var modStr string
+				if modified.Year() != now.Year() {
+					modStr = modified.Format("Jan _2  2006")
+				} else {
+					modStr = modified.Format("Jan _2 15:04")
+				}
+				fmt.Printf("\t%s\t%s\t%s", e.Mode, modStr, e.Entry)
 			}
 			fmt.Println()
-			err := list(nest(indent, isLast), verbose, e.Entry, st)
+			err := list(now, nest(indent, isLast), verbose, e.Entry, st)
 			if err != nil {
 				return err
 			}
