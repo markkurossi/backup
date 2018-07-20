@@ -18,8 +18,10 @@ import (
 )
 
 func cmdLs() {
+	snapshot := flag.Bool("s", false, "List snapshots.")
+	long := flag.Bool("l", false, "List in long format.")
 	debug := flag.Bool("d", false, "Enable debugging.")
-	root := flag.String("r", "", "Tree root ID")
+	root := flag.String("r", "", "Root object ID.")
 	flag.Parse()
 
 	if *debug {
@@ -41,10 +43,14 @@ func cmdLs() {
 	} else {
 		id = z.HeadID
 	}
-	fmt.Printf("z.HeadID: %v\n", z.HeadID)
-	fmt.Printf("Root: %s\n", id)
 
-	err = objtree.List(id, z)
+	if *snapshot {
+		// List snapshots.
+		err = objtree.ListSnapshots(id, z, *long)
+	} else {
+		// List files.
+		err = objtree.List(id, z, *long)
+	}
 	if err != nil {
 		fmt.Printf("%s\n", err)
 	}

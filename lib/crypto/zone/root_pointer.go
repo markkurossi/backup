@@ -13,6 +13,7 @@ import (
 )
 
 type RootPointer struct {
+	Version   byte
 	Timestamp int64
 	Pointer   storage.ID
 	Digest    []byte

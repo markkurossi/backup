@@ -17,11 +17,13 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/encoding"
@@ -185,6 +187,38 @@ func (zone *Zone) init(secret []byte, suite Suite) error {
 	return nil
 }
 
+func (zone *Zone) SetRootPointer(id storage.ID) error {
+	pointer := &RootPointer{
+		Version:   1,
+		Timestamp: time.Now().UnixNano(),
+		Pointer:   id,
+	}
+
+	input, err := encoding.Marshal(pointer)
+	if err != nil {
+		return err
+	}
+
+	zone.hmac.Reset()
+	zone.hmac.Write(input)
+	pointer.Digest = zone.hmac.Sum(nil)
+
+	final, err := encoding.Marshal(pointer)
+	if err != nil {
+		return err
+	}
+
+	data := make([]byte, rootDistance)
+
+	// First copy at the beginning of the root block.
+	copy(data, final)
+
+	// Second copy `rootDistance' away from the first copy.
+	data = append(data, final...)
+
+	return zone.Local.Set(zone.Name, rootPointer, data)
+}
+
 func (zone *Zone) getHead() error {
 	data, err := zone.Local.Get(zone.Name, rootPointer)
 	if err != nil {
@@ -244,7 +278,24 @@ func (zone *Zone) getHead() error {
 }
 
 func (zone *Zone) checkRootPointer(ptr *RootPointer) error {
-	return fmt.Errorf("checkRootPointer not implemented yet")
+	digest := ptr.Digest
+	ptr.Digest = nil
+
+	input, err := encoding.Marshal(ptr)
+	if err != nil {
+		return err
+	}
+
+	zone.hmac.Reset()
+	zone.hmac.Write(input)
+
+	computed := zone.hmac.Sum(nil)
+
+	if !bytes.Equal(digest, computed) {
+		return errors.New("Invalid root pointer integrity check value")
+	}
+
+	return nil
 }
 
 func (zone *Zone) bruteForceRootPointer() error {
@@ -297,6 +348,11 @@ func (zone *Zone) bruteForceRootPointer() error {
 
 	zone.Head = best
 	zone.HeadID = bestID
+
+	err := zone.SetRootPointer(bestID)
+	if err != nil {
+		fmt.Printf("Failed to set root pointer: %s\n", err)
+	}
 
 	return nil
 }

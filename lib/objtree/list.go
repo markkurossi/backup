@@ -16,9 +16,9 @@ import (
 	"github.com/markkurossi/backup/lib/tree"
 )
 
-func List(root storage.ID, st storage.Accessor) error {
+func List(root storage.ID, st storage.Accessor, long bool) error {
 	now := time.Now()
-	return list(now, "", true, root, st)
+	return list(now, "", long, root, st)
 }
 
 func nest(indent string, isLast bool) string {
@@ -29,12 +29,11 @@ func nest(indent string, isLast bool) string {
 	}
 }
 
-func list(now time.Time, indent string, verbose bool, root storage.ID,
+func list(now time.Time, indent string, long bool, root storage.ID,
 	st storage.Accessor) error {
 	element, err := tree.DeserializeID(root, st)
 	if err != nil {
-		fmt.Printf("Failed to deserialize ID %s: %s\n", root, err)
-		return err
+		return fmt.Errorf("Failed to deserialize ID %s: %s\n", root, err)
 	}
 
 	switch el := element.(type) {
@@ -43,7 +42,7 @@ func list(now time.Time, indent string, verbose bool, root storage.ID,
 		fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
 		fmt.Printf("|-- Parent : %s\n", el.Parent)
 		fmt.Printf("`-- Root   : %s\n", el.Root)
-		return list(now, indent+"    ", verbose, el.Root, st)
+		return list(now, indent+"    ", long, el.Root, st)
 
 	case *tree.Directory:
 		count := len(el.Entries)
@@ -57,7 +56,7 @@ func list(now time.Time, indent string, verbose bool, root storage.ID,
 				in = indent + "|-- "
 			}
 			fmt.Printf("%s%s", in, e.Name)
-			if verbose {
+			if long {
 				for i := 0; i+len(in)+len(e.Name) < 40; i++ {
 					fmt.Printf(" ")
 				}
@@ -71,12 +70,34 @@ func list(now time.Time, indent string, verbose bool, root storage.ID,
 				fmt.Printf("\t%s\t%s\t%s", e.Mode, modStr, e.Entry)
 			}
 			fmt.Println()
-			err := list(now, nest(indent, isLast), verbose, e.Entry, st)
+			err := list(now, nest(indent, isLast), long, e.Entry, st)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
+	return nil
+}
+
+func ListSnapshots(root storage.ID, st storage.Accessor, long bool) error {
+	for !root.Undefined() {
+		element, err := tree.DeserializeID(root, st)
+		if err != nil {
+			return fmt.Errorf("Failed to deserialize ID '%s': %s\n", root, err)
+		}
+
+		switch el := element.(type) {
+		case *tree.Snapshot:
+			fmt.Printf("Snapshot %s\n", root)
+			fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
+			fmt.Printf("|-- Parent : %s\n", el.Parent)
+			fmt.Printf("`-- Root   : %s\n", el.Root)
+			root = el.Parent
+
+		default:
+			return fmt.Errorf("ID %s is not a snapshot", root)
+		}
+	}
 	return nil
 }

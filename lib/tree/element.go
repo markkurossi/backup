@@ -10,6 +10,7 @@ package tree
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"github.com/markkurossi/backup/lib/encoding"
@@ -35,6 +36,9 @@ type Element interface {
 }
 
 func DeserializeID(id storage.ID, st storage.Accessor) (Element, error) {
+	if id.Undefined() {
+		return nil, errors.New("Undefined ID")
+	}
 	data, err := st.Read(id)
 	if err != nil {
 		return nil, err

@@ -70,5 +70,11 @@ func cmdUpdate() {
 	z.Head = snapshot
 	z.HeadID = headID
 
+	err = z.SetRootPointer(headID)
+	if err != nil {
+		fmt.Printf("Failed to save snapshot: %s\n", err)
+		os.Exit(1)
+	}
+
 	fmt.Printf("Snapshot: %s\n", headID)
 }
