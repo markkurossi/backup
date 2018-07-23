@@ -37,7 +37,7 @@ type handler struct {
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("r: %v\n", r.URL)
-	if strings.HasSuffix(r.URL.Path, ".wasm") {
+	if false && strings.HasSuffix(r.URL.Path, ".wasm") {
 		w.Header().Set("Content-Type", "application/wasm")
 	}
 	h.fs.ServeHTTP(w, r)
