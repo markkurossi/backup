@@ -9,6 +9,8 @@
 package tree
 
 import (
+	"fmt"
+
 	"github.com/markkurossi/backup/lib/encoding"
 	"github.com/markkurossi/backup/lib/storage"
 )
@@ -16,8 +18,13 @@ import (
 type Snapshot struct {
 	ElementHeader
 	Timestamp int64
+	Size      FileSize
 	Root      storage.ID
 	Parent    storage.ID
+}
+
+func (s *Snapshot) String() string {
+	return fmt.Sprintf("Snapshot %s (%s)", s.Root, s.Size)
 }
 
 func (s *Snapshot) Serialize() ([]byte, error) {

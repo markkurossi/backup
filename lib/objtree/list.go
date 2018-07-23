@@ -38,7 +38,7 @@ func list(now time.Time, indent string, long bool, root storage.ID,
 
 	switch el := element.(type) {
 	case *tree.Snapshot:
-		fmt.Printf("Snapshot %s\n", root)
+		fmt.Printf("%s\n", el)
 		fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
 		fmt.Printf("|-- Parent : %s\n", el.Parent)
 		fmt.Printf("`-- Root   : %s\n", el.Root)
@@ -89,7 +89,7 @@ func ListSnapshots(root storage.ID, st storage.Accessor, long bool) error {
 
 		switch el := element.(type) {
 		case *tree.Snapshot:
-			fmt.Printf("Snapshot %s\n", root)
+			fmt.Printf("%s\n", el)
 			fmt.Printf("|-- Created: %s\n", time.Unix(0, el.Timestamp))
 			fmt.Printf("|-- Parent : %s\n", el.Parent)
 			fmt.Printf("`-- Root   : %s\n", el.Root)

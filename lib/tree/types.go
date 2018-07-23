@@ -37,3 +37,15 @@ const (
 )
 
 type Version uint8
+
+type FileSize int64
+
+func (size FileSize) String() string {
+	if size > 1024*1024 {
+		return fmt.Sprintf("%d MB", size/(1024*1024))
+	} else if size > 1024 {
+		return fmt.Sprintf("%d kB", size/1024)
+	} else {
+		return fmt.Sprintf("%d B")
+	}
+}

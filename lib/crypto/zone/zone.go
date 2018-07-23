@@ -143,6 +143,14 @@ func (zone *Zone) Write(data []byte) (id storage.ID, err error) {
 		return
 	}
 
+	exists, err := zone.Local.Exists(namespace, key)
+	if err != nil {
+		return id, err
+	}
+	if exists {
+		return id, nil
+	}
+
 	var encrypted []byte
 	encrypted, err = zone.encrypt(data)
 	if err != nil {
@@ -261,9 +269,14 @@ func (zone *Zone) getHead() error {
 	} else {
 		return zone.bruteForceRootPointer()
 	}
+	if id.Undefined() {
+		// Empty backup object tree.
+		return nil
+	}
 
 	element, err := tree.DeserializeID(id, zone)
 	if err != nil {
+		fmt.Printf("Failed to deserialize snapshot '%s': %s\n", id, err)
 		return zone.bruteForceRootPointer()
 	}
 	head, ok := element.(*tree.Snapshot)

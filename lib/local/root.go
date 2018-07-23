@@ -28,6 +28,20 @@ func (root *Root) Mkdir(dir string) error {
 	return os.MkdirAll(d, 0755)
 }
 
+func (root *Root) Exists(namespace, key string) (bool, error) {
+	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
+	path := fmt.Sprintf("%s/%s", dir, key)
+
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func (root *Root) Get(namespace, key string) ([]byte, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	path := fmt.Sprintf("%s/%s", dir, key)

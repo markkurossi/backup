@@ -51,6 +51,7 @@ func cmdUpdate() {
 
 	snapshot := tree.NewSnapshot()
 	snapshot.Timestamp = time.Now().UnixNano()
+	snapshot.Size = tree.FileSize(z.Written)
 	snapshot.Root = id
 	if z.Head != nil {
 		snapshot.Parent = z.HeadID

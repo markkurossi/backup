@@ -15,6 +15,7 @@ import (
 
 	"github.com/markkurossi/backup/lib/crypto/zone"
 	"github.com/markkurossi/backup/lib/local"
+	"github.com/markkurossi/backup/lib/storage"
 )
 
 func cmdInit() {
@@ -58,6 +59,11 @@ func cmdInit() {
 	err = z.AddIdentity(key.PublicKey())
 	if err != nil {
 		fmt.Printf("Failed to add identity key: %s\n", err)
+		os.Exit(1)
+	}
+	err = z.SetRootPointer(storage.EmptyID)
+	if err != nil {
+		fmt.Printf("Failed to init root pointer: %s\n", err)
 		os.Exit(1)
 	}
 }

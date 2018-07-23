@@ -14,6 +14,10 @@ import (
 	"fmt"
 )
 
+var (
+	EmptyID = ID{}
+)
+
 type ID struct {
 	Data []byte
 }
