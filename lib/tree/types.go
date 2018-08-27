@@ -46,6 +46,6 @@ func (size FileSize) String() string {
 	} else if size > 1024 {
 		return fmt.Sprintf("%d kB", size/1024)
 	} else {
-		return fmt.Sprintf("%d B")
+		return fmt.Sprintf("%d B", size)
 	}
 }
