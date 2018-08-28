@@ -15,7 +15,7 @@ import (
 
 	"github.com/markkurossi/backup/lib/agent"
 	"github.com/markkurossi/backup/lib/crypto/zone"
-	"github.com/markkurossi/backup/lib/local"
+	"github.com/markkurossi/backup/lib/persistence"
 )
 
 var commands = map[string]func(){
@@ -54,7 +54,7 @@ func connectAgent() {
 	}
 }
 
-func openZone(name string) *zone.Zone {
+func openZone(name string) (*zone.Zone, string) {
 	connectAgent()
 
 	keys, err := client.ListKeys()
@@ -72,7 +72,7 @@ func openZone(name string) *zone.Zone {
 		fmt.Printf("Failed to get current working directory: %s\n", err)
 		os.Exit(1)
 	}
-	root, err := local.OpenRoot(wd)
+	root, err := persistence.OpenFilesystem(fmt.Sprintf("%s/.backup", wd))
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)
@@ -84,7 +84,7 @@ func openZone(name string) *zone.Zone {
 		os.Exit(1)
 	}
 
-	return z
+	return z, wd
 }
 
 func main() {

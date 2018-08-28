@@ -14,7 +14,7 @@ import (
 	"os"
 
 	"github.com/markkurossi/backup/lib/crypto/zone"
-	"github.com/markkurossi/backup/lib/local"
+	"github.com/markkurossi/backup/lib/persistence"
 	"github.com/markkurossi/backup/lib/storage"
 )
 
@@ -45,7 +45,7 @@ func cmdInit() {
 		fmt.Printf("Failed to get current working directory: %s\n", err)
 		os.Exit(1)
 	}
-	root, err := local.InitRoot(wd)
+	root, err := persistence.CreateFilesystem(fmt.Sprintf("%s/.backup", wd))
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		os.Exit(1)

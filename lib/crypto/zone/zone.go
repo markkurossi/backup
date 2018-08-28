@@ -22,12 +22,11 @@ import (
 	"hash"
 	"io"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/markkurossi/backup/lib/crypto/identity"
 	"github.com/markkurossi/backup/lib/encoding"
-	"github.com/markkurossi/backup/lib/local"
+	"github.com/markkurossi/backup/lib/persistence"
 	"github.com/markkurossi/backup/lib/storage"
 	"github.com/markkurossi/backup/lib/tree"
 )
@@ -38,23 +37,18 @@ const (
 	rootDistance = 4096
 )
 
-var zoneDirs = []string{
-	"identities",
-	"objects",
-}
-
 type Zone struct {
-	Name    string
-	Local   *local.Root
-	Head    *tree.Snapshot
-	HeadID  storage.ID
-	idHash  hash.Hash
-	secret  []byte
-	suite   Suite
-	cipher  cipher.Block
-	hmac    hash.Hash
-	Written uint64
-	Saved   uint64
+	Name        string
+	Persistence persistence.Accessor
+	Head        *tree.Snapshot
+	HeadID      storage.ID
+	idHash      hash.Hash
+	secret      []byte
+	suite       Suite
+	cipher      cipher.Block
+	hmac        hash.Hash
+	Written     uint64
+	Saved       uint64
 }
 
 func (zone *Zone) identities() string {
@@ -73,56 +67,14 @@ func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	if err != nil {
 		return err
 	}
-	return zone.Local.Set(zone.identities(), key.ID(), encrypted)
-}
-
-func (zone *Zone) ResolveID(idstring string) (id storage.ID, err error) {
-	mid := strings.Index(idstring, "...")
-	if mid < 0 {
-		// No separator, full ID.
-		return storage.IDFromString(idstring)
-	}
-	if mid < 4 {
-		return id, fmt.Errorf("Invalid truncated ID '%s'", idstring)
-	}
-	prefix, err := hex.DecodeString(idstring[:mid])
-	if err != nil {
-		return
-	}
-	suffix, err := hex.DecodeString(idstring[mid+3:])
-	if err != nil {
-		return
-	}
-
-	namespace, _ := zone.objectNames(storage.NewID(prefix))
-	keys, err := zone.Local.GetKeys(namespace)
-	if err != nil {
-		return
-	}
-
-	nsBytes := prefix[:2]
-	prefix = prefix[2:]
-
-	for _, key := range keys {
-		kb, err := hex.DecodeString(key)
-		if err != nil {
-			fmt.Printf("Skipping invalid object key '%s': %s\n", key, err)
-			continue
-		}
-		if bytes.HasPrefix(kb, prefix) && bytes.HasSuffix(kb, suffix) {
-			id.Data = append(id.Data, nsBytes...)
-			id.Data = append(id.Data, kb...)
-			return id, nil
-		}
-	}
-	return id, fmt.Errorf("Invalid ID '%s'", idstring)
+	return zone.Persistence.Set(zone.identities(), key.ID(), encrypted)
 }
 
 // Read ipmlements the storage.Reader interface.
 func (zone *Zone) Read(id storage.ID) ([]byte, error) {
 	namespace, key := zone.objectNames(id)
 
-	data, err := zone.Local.Get(namespace, key)
+	data, err := zone.Persistence.Get(namespace, key)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +90,8 @@ func (zone *Zone) Write(data []byte) (id storage.ID, err error) {
 	id = storage.NewID(zone.idHash.Sum(nil))
 
 	namespace, key := zone.objectNames(id)
-	err = zone.Local.Mkdir(namespace)
-	if err != nil {
-		return
-	}
 
-	exists, err := zone.Local.Exists(namespace, key)
+	exists, err := zone.Persistence.Exists(namespace, key)
 	if err != nil {
 		return id, err
 	}
@@ -157,7 +105,7 @@ func (zone *Zone) Write(data []byte) (id storage.ID, err error) {
 		return
 	}
 
-	err = zone.Local.Set(namespace, key, encrypted)
+	err = zone.Persistence.Set(namespace, key, encrypted)
 	if err != nil {
 		return
 	}
@@ -224,11 +172,11 @@ func (zone *Zone) SetRootPointer(id storage.ID) error {
 	// Second copy `rootDistance' away from the first copy.
 	data = append(data, final...)
 
-	return zone.Local.Set(zone.Name, rootPointer, data)
+	return zone.Persistence.Set(zone.Name, rootPointer, data)
 }
 
 func (zone *Zone) getHead() error {
-	data, err := zone.Local.Get(zone.Name, rootPointer)
+	data, err := zone.Persistence.Get(zone.Name, rootPointer)
 	if err != nil {
 		return zone.bruteForceRootPointer()
 	}
@@ -322,7 +270,7 @@ func (zone *Zone) bruteForceRootPointer() error {
 			buf[1] = byte(j)
 
 			ns, _ := zone.objectNames(storage.NewID(buf[:]))
-			kvs, err := zone.Local.GetAll(ns)
+			kvs, err := zone.Persistence.GetAll(ns)
 			if err != nil {
 				continue
 			}
@@ -480,27 +428,20 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(r)
 }
 
-func newZone(name string, local *local.Root) *Zone {
+func newZone(name string, persistence persistence.Accessor) *Zone {
 	return &Zone{
-		Name:  name,
-		Local: local,
+		Name:        name,
+		Persistence: persistence,
 	}
 }
 
-func Create(local *local.Root, name string) (*Zone, error) {
+func Create(persistence persistence.Accessor, name string) (*Zone, error) {
 	secret := make([]byte, suite.KeyLen())
 	if _, err := io.ReadFull(rand.Reader, secret); err != nil {
 		return nil, err
 	}
 
-	for _, dir := range zoneDirs {
-		err := local.Mkdir(fmt.Sprintf("%s/%s", name, dir))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	zone := newZone(name, local)
+	zone := newZone(name, persistence)
 	if err := zone.init(secret, suite); err != nil {
 		return nil, err
 	}
@@ -508,21 +449,15 @@ func Create(local *local.Root, name string) (*Zone, error) {
 	return zone, nil
 }
 
-func Open(local *local.Root, name string, keys []identity.PrivateKey) (
-	*Zone, error) {
+func Open(persistence persistence.Accessor, name string,
+	keys []identity.PrivateKey) (*Zone, error) {
 
-	zone := newZone(name, local)
-
-	// Get zone identities.
-	identities, err := local.GetAll(zone.identities())
-	if err != nil {
-		return nil, err
-	}
+	zone := newZone(name, persistence)
 
 	// Do we have an identity to open the zone?
 	for _, key := range keys {
-		data, ok := identities[key.ID()]
-		if !ok {
+		data, err := persistence.Get(zone.identities(), key.ID())
+		if err != nil {
 			continue
 		}
 		secret, err := key.Decrypt(data)
@@ -542,5 +477,6 @@ func Open(local *local.Root, name string, keys []identity.PrivateKey) (
 
 		return zone, nil
 	}
+
 	return nil, fmt.Errorf("No key to open zone '%s'", name)
 }

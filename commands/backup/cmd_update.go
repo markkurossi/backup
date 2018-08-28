@@ -26,16 +26,16 @@ func cmdUpdate() {
 		fmt.Printf("Debugging enabled\n")
 	}
 
-	z := openZone("default")
+	z, root := openZone("default")
 	fmt.Printf("Zone '%s' opened\n", z.Name)
 
-	id, err := local.Traverse(z.Local.Root, z)
+	id, err := local.Traverse(root, z)
 	if err != nil {
-		fmt.Printf("Failed to traverse directory '%s': %s\n", z.Local.Root, err)
+		fmt.Printf("Failed to traverse directory '%s': %s\n", root, err)
 		os.Exit(1)
 	}
 	if id.Undefined() {
-		fmt.Printf("Zone root '%s' is not a directory\n", z.Local.Root)
+		fmt.Printf("Zone root '%s' is not a directory\n", root)
 		os.Exit(1)
 	}
 	fmt.Printf("Tree ID: %s\n", id)
