@@ -24,6 +24,7 @@ var commands = map[string]func(){
 	"keygen":  cmdKeygen,
 	"ls":      cmdLs,
 	"update":  cmdUpdate,
+	"zone":    cmdZone,
 }
 
 var address = flag.String("a", "", "Agent UNIX-domain socket address.")
