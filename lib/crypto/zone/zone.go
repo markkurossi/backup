@@ -70,11 +70,11 @@ func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	return zone.Persistence.Set(zone.identities(), key.ID(), encrypted)
 }
 
-// Read ipmlements the storage.Reader interface.
+// Read implements the storage.Reader interface.
 func (zone *Zone) Read(id storage.ID) ([]byte, error) {
 	namespace, key := zone.objectNames(id)
 
-	data, err := zone.Persistence.Get(namespace, key)
+	data, err := zone.Persistence.Get(namespace, key, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,8 @@ func (zone *Zone) SetRootPointer(id storage.ID) error {
 }
 
 func (zone *Zone) getHead() error {
-	data, err := zone.Persistence.Get(zone.Name, rootPointer)
+	data, err := zone.Persistence.Get(zone.Name, rootPointer,
+		persistence.NoCache)
 	if err != nil {
 		return zone.bruteForceRootPointer()
 	}
@@ -456,7 +457,7 @@ func Open(persistence persistence.Accessor, name string,
 
 	// Do we have an identity to open the zone?
 	for _, key := range keys {
-		data, err := persistence.Get(zone.identities(), key.ID())
+		data, err := persistence.Get(zone.identities(), key.ID(), 0)
 		if err != nil {
 			continue
 		}

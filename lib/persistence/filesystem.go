@@ -56,7 +56,7 @@ func (fs *Filesystem) Exists(namespace, key string) (bool, error) {
 	return true, nil
 }
 
-func (fs *Filesystem) Get(namespace, key string) ([]byte, error) {
+func (fs *Filesystem) Get(namespace, key string, flags Flags) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s/%s", fs.root, namespace, key)
 	return ioutil.ReadFile(path)
 }

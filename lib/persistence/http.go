@@ -42,10 +42,13 @@ func (h *HTTP) Exists(namespace, key string) (bool, error) {
 	return resp.StatusCode/100 == 2, nil
 }
 
-func (h *HTTP) Get(namespace, key string) ([]byte, error) {
+func (h *HTTP) Get(namespace, key string, flags Flags) ([]byte, error) {
 	req, err := http.NewRequest("GET", h.makeURL(namespace, key), nil)
 	if err != nil {
 		return nil, err
+	}
+	if (flags & NoCache) != 0 {
+		req.Header.Add("Cache-Control", "no-cache")
 	}
 	resp, err := h.client.Do(req)
 	if err != nil {
