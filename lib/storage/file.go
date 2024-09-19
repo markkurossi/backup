@@ -1,7 +1,5 @@
 //
-// file.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -16,11 +14,13 @@ import (
 	"os"
 )
 
+// File implements a filesystem storage.
 type File struct {
 	root string
 	h    hash.Hash
 }
 
+// NewFile initializes filesystem storage on the root directory.
 func NewFile(root string) (*File, error) {
 	fmt.Printf("Initializing filesystem storage to '%s'\n", root)
 
@@ -29,7 +29,7 @@ func NewFile(root string) (*File, error) {
 		return nil, err
 	}
 	if !fileInfo.IsDir() {
-		return nil, fmt.Errorf("Filesystem storage root is not a directory")
+		return nil, fmt.Errorf("filesystem storage root is not a directory")
 	}
 
 	return &File{
@@ -71,7 +71,7 @@ func (f *File) Read(id ID) ([]byte, error) {
 
 func (f *File) makeFilename(id ID) (string, error) {
 	if len(id.Data) < 2 {
-		return "", fmt.Errorf("Invalid ID: %s", id)
+		return "", fmt.Errorf("invalid ID: %s", id)
 	}
 	return fmt.Sprintf("%s/%x/%x/%x",
 		f.root, id.Data[:1], id.Data[1:2], id.Data[2:]), nil
@@ -79,7 +79,7 @@ func (f *File) makeFilename(id ID) (string, error) {
 
 func (f *File) makeDirTree(id ID) error {
 	if len(id.Data) < 2 {
-		return fmt.Errorf("Invalid ID: %s", id)
+		return fmt.Errorf("invalid ID: %s", id)
 	}
 	path := fmt.Sprintf("%s/%x/%x", f.root, id.Data[:1], id.Data[1:2])
 

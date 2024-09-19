@@ -1,7 +1,5 @@
 //
-// marshal.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -17,6 +15,7 @@ import (
 	"strings"
 )
 
+// Marshal encodes the value v.
 func Marshal(v interface{}) ([]byte, error) {
 	out := new(bytes.Buffer)
 
@@ -71,14 +70,13 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 		if value.Type().Elem().Kind() == reflect.Uint8 {
 			_, err = out.Write(value.Bytes())
 			return err
-		} else {
-			for i := 0; i < value.Len(); i++ {
-				if err := marshalValue(out, value.Index(i)); err != nil {
-					return err
-				}
-			}
-			return nil
 		}
+		for i := 0; i < value.Len(); i++ {
+			if err := marshalValue(out, value.Index(i)); err != nil {
+				return err
+			}
+		}
+		return nil
 
 	case reflect.String:
 		data := []byte(value.String())
@@ -106,12 +104,13 @@ func marshalValue(out io.Writer, value reflect.Value) error {
 		}
 
 	default:
-		return fmt.Errorf("Unsupported type: %s", value.Type().Kind().String())
+		return fmt.Errorf("unsupported type: %s", value.Type().Kind().String())
 	}
 
 	return nil
 }
 
+// Unmarshal decodes the value v from the reader in.
 func Unmarshal(in io.Reader, v interface{}) error {
 	return unmarshalValue(in, reflect.ValueOf(v))
 }
@@ -211,7 +210,7 @@ func unmarshalValue(in io.Reader, value reflect.Value) (err error) {
 		}
 
 	default:
-		return fmt.Errorf("Unsupported type: %s", value.Type().Kind().String())
+		return fmt.Errorf("unsupported type: %s", value.Type().Kind().String())
 	}
 
 	return

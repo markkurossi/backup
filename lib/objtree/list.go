@@ -1,7 +1,5 @@
 //
-// list.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -16,6 +14,7 @@ import (
 	"github.com/markkurossi/backup/lib/tree"
 )
 
+// List prints the storage to standard output.
 func List(root storage.ID, st storage.Accessor, long bool) error {
 	now := time.Now()
 	return list(now, "", long, root, st)
@@ -24,16 +23,15 @@ func List(root storage.ID, st storage.Accessor, long bool) error {
 func nest(indent string, isLast bool) string {
 	if isLast {
 		return indent + "    "
-	} else {
-		return indent + "|   "
 	}
+	return indent + "|   "
 }
 
 func list(now time.Time, indent string, long bool, root storage.ID,
 	st storage.Accessor) error {
 	element, err := tree.DeserializeID(root, st)
 	if err != nil {
-		return fmt.Errorf("Failed to deserialize ID %s: %s\n", root, err)
+		return fmt.Errorf("failed to deserialize ID %s: %s", root, err)
 	}
 
 	switch el := element.(type) {
@@ -80,11 +78,12 @@ func list(now time.Time, indent string, long bool, root storage.ID,
 	return nil
 }
 
+// ListSnapshots lists snapshots to standard output.
 func ListSnapshots(root storage.ID, st storage.Accessor, long bool) error {
 	for !root.Undefined() {
 		element, err := tree.DeserializeID(root, st)
 		if err != nil {
-			return fmt.Errorf("Failed to deserialize ID '%s': %s\n", root, err)
+			return fmt.Errorf("failed to deserialize ID '%s': %s", root, err)
 		}
 
 		switch el := element.(type) {

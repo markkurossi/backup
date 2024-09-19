@@ -1,7 +1,5 @@
 //
-// filesystem.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -14,14 +12,16 @@ import (
 	"os"
 )
 
+// Filesystem implements filesystem persistence storage accessor.
 type Filesystem struct {
 	root string
 }
 
+// CreateFilesystem creates a filesystem for the argument diretory.
 func CreateFilesystem(root string) (*Filesystem, error) {
 	_, err := os.Stat(root)
 	if err == nil {
-		return nil, fmt.Errorf("Root directory '%s' already exists", root)
+		return nil, fmt.Errorf("root directory '%s' already exists", root)
 	}
 	err = os.Mkdir(root, 0755)
 	if err != nil {
@@ -33,16 +33,18 @@ func CreateFilesystem(root string) (*Filesystem, error) {
 	}, nil
 }
 
+// OpenFilesystem opens the filesystem from the argument directory.
 func OpenFilesystem(root string) (*Filesystem, error) {
 	_, err := os.Stat(root)
 	if err != nil {
-		return nil, fmt.Errorf("Could not access root directory: %s", err)
+		return nil, fmt.Errorf("could not access root directory: %s", err)
 	}
 	return &Filesystem{
 		root: root,
 	}, nil
 }
 
+// Exists implements Reader.Exists.
 func (fs *Filesystem) Exists(namespace, key string) (bool, error) {
 	path := fmt.Sprintf("%s/%s/%s", fs.root, namespace, key)
 
@@ -56,11 +58,13 @@ func (fs *Filesystem) Exists(namespace, key string) (bool, error) {
 	return true, nil
 }
 
+// Get implements Reader.Get.
 func (fs *Filesystem) Get(namespace, key string, flags Flags) ([]byte, error) {
 	path := fmt.Sprintf("%s/%s/%s", fs.root, namespace, key)
 	return ioutil.ReadFile(path)
 }
 
+// GetAll implements Reader.GetAll.
 func (fs *Filesystem) GetAll(namespace string) (map[string][]byte, error) {
 	dir := fmt.Sprintf("%s/%s", fs.root, namespace)
 	files, err := ioutil.ReadDir(dir)
@@ -85,6 +89,7 @@ func (fs *Filesystem) GetAll(namespace string) (map[string][]byte, error) {
 	return kv, nil
 }
 
+// Set implements Writer.Set.
 func (fs *Filesystem) Set(namespace, key string, value []byte) error {
 	dir := fmt.Sprintf("%s/%s", fs.root, namespace)
 	err := os.MkdirAll(dir, 0755)

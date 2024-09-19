@@ -1,7 +1,5 @@
 //
-// client.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -16,10 +14,12 @@ import (
 	"github.com/markkurossi/backup/lib/crypto/identity"
 )
 
+// Client implements an agent connection.
 type Client struct {
 	conn net.Conn
 }
 
+// NewClient creates a new client and connects to the agent.
 func NewClient(path string) (*Client, error) {
 	conn, err := net.Dial("unix", path)
 	if err != nil {
@@ -31,6 +31,7 @@ func NewClient(path string) (*Client, error) {
 	}, nil
 }
 
+// AddKey adds the identity key to the agent.
 func (c *Client) AddKey(key identity.Key) error {
 	data, err := key.Marshal()
 	if err != nil {
@@ -53,10 +54,11 @@ func (c *Client) AddKey(key identity.Key) error {
 		return nil
 
 	default:
-		return fmt.Errorf("Unsupported agent message '%s'", msg.Type())
+		return fmt.Errorf("unsupported agent message '%s'", msg.Type())
 	}
 }
 
+// ListKeys lists all identity keys in the agent.
 func (c *Client) ListKeys() ([]identity.PrivateKey, error) {
 	msg, err := RPC(c.conn, &MsgListKeys{
 		MsgHdr: MsgHdr{
@@ -87,7 +89,7 @@ func (c *Client) ListKeys() ([]identity.PrivateKey, error) {
 		return keys, nil
 
 	default:
-		return nil, fmt.Errorf("Unsupported agent message '%s'", msg.Type())
+		return nil, fmt.Errorf("unsupported agent message '%s'", msg.Type())
 	}
 }
 
@@ -136,7 +138,7 @@ func (key *proxyKey) Decrypt(ciphertext []byte) ([]byte, error) {
 		return m.Data, nil
 
 	default:
-		return nil, fmt.Errorf("Unsupported agent message '%s'", msg.Type())
+		return nil, fmt.Errorf("unsupported agent message '%s'", msg.Type())
 	}
 }
 

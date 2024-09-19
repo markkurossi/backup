@@ -1,7 +1,5 @@
 //
-// encrypt.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -28,8 +26,10 @@ const (
 	version = byte(0)
 )
 
+// EncrAlg defines an encryption algorithm.
 type EncrAlg int
 
+// Encryption algorithms.
 const (
 	EncrAES128GCM EncrAlg = 0
 )
@@ -44,6 +44,7 @@ func (e EncrAlg) String() string {
 	}
 }
 
+// KeyLen returns the key length of the encryption algorithm e.
 func (e EncrAlg) KeyLen() int {
 	switch e {
 	case EncrAES128GCM:
@@ -54,6 +55,7 @@ func (e EncrAlg) KeyLen() int {
 	}
 }
 
+// KDFAlg defines a key derivation function.
 type KDFAlg int
 
 func (k KDFAlg) String() string {
@@ -67,9 +69,12 @@ func (k KDFAlg) String() string {
 }
 
 const (
+	// KDFPBKDF24096SHA256 defines key derivation function PBKDF with
+	// 4096 rounds of SHA-256.
 	KDFPBKDF24096SHA256 KDFAlg = 0
 )
 
+// EncryptedKey implements an encrypted data blob.
 type EncryptedKey struct {
 	Magic     uint32
 	Version   byte
@@ -80,6 +85,7 @@ type EncryptedKey struct {
 	Encrypted []byte
 }
 
+// Encrypt encrypts the data with the encrAlg and passphrase.
 func Encrypt(data []byte, encrAlg EncrAlg, name string,
 	passphrase []byte, kdfAlg KDFAlg) ([]byte, error) {
 
@@ -109,6 +115,7 @@ func Encrypt(data []byte, encrAlg EncrAlg, name string,
 	return encoding.Marshal(enc)
 }
 
+// Decrypt decrypts the ciphertext with the passphrase.
 func Decrypt(ciphertext, passphrase []byte) ([]byte, error) {
 	if len(ciphertext) < 5 {
 		return nil, errors.New("Truncated ID key blob")
@@ -117,7 +124,7 @@ func Decrypt(ciphertext, passphrase []byte) ([]byte, error) {
 		return nil, errors.New("Invalid ID key magic")
 	}
 	if ciphertext[4] != version {
-		return nil, fmt.Errorf("Invalid ID key version %d", ciphertext[4])
+		return nil, fmt.Errorf("invalid ID key version %d", ciphertext[4])
 	}
 
 	enc := new(EncryptedKey)
@@ -141,7 +148,7 @@ func kdf(passphrase, salt []byte, alg KDFAlg, keyLen int) ([]byte, error) {
 		return pbkdf2.Key(passphrase, salt, 4096, keyLen, sha256.New), nil
 
 	default:
-		return nil, fmt.Errorf("Unknown KDF algorithm %s", alg)
+		return nil, fmt.Errorf("unknown KDF algorithm %s", alg)
 	}
 }
 
@@ -165,7 +172,7 @@ func encrypt(data []byte, alg EncrAlg, key []byte) ([]byte, error) {
 		return append(nonce, encrypted...), nil
 
 	default:
-		return nil, fmt.Errorf("Unknown encryption algorithm %s", alg)
+		return nil, fmt.Errorf("unknown encryption algorithm %s", alg)
 	}
 }
 
@@ -187,6 +194,6 @@ func decrypt(data []byte, alg EncrAlg, key []byte) ([]byte, error) {
 		return aesgcm.Open(nil, data[0:nonceSize], data[nonceSize:], nil)
 
 	default:
-		return nil, fmt.Errorf("Unknown encryption algorithm %s", alg)
+		return nil, fmt.Errorf("unknown encryption algorithm %s", alg)
 	}
 }

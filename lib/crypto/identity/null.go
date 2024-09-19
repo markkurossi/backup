@@ -1,7 +1,5 @@
 //
-// null.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -317,6 +315,7 @@ var nullID = []byte{
 	0xf0, 0x85, 0x8e,
 }
 
+// GetNull returns the defaul null encryption key.
 func GetNull() (PrivateKey, error) {
 	data, err := Decrypt(nullID, []byte{})
 	if err != nil {

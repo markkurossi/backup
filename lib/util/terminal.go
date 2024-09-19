@@ -1,7 +1,5 @@
 //
-// terminal.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -16,6 +14,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// ReadPassphrase reads a passphrase from the terminal.
 func ReadPassphrase(prompt string, confirm bool) ([]byte, error) {
 	for {
 		fmt.Printf("%s: ", prompt)

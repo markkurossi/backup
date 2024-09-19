@@ -1,7 +1,5 @@
 //
-// types.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -12,6 +10,7 @@ import (
 	"fmt"
 )
 
+// Type defines the tree object types.
 type Type uint8
 
 var typeNames = map[Type]string{
@@ -29,6 +28,7 @@ func (t Type) String() string {
 	return fmt.Sprintf("{Type %d}", t)
 }
 
+// Object tyhpes
 const (
 	TypeSimpleFile Type = iota + 1
 	TypeChunkedFile
@@ -36,8 +36,10 @@ const (
 	TypeSnapshot
 )
 
+// Version defines object version.
 type Version uint8
 
+// FileSize defines file size in bytes.
 type FileSize int64
 
 func (size FileSize) String() string {

@@ -1,7 +1,5 @@
 //
-// key.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,6 +13,7 @@ import (
 	"github.com/markkurossi/backup/lib/encoding"
 )
 
+// Key implements a keypair.
 type Key interface {
 	Name() string
 	Type() KeyType
@@ -23,17 +22,20 @@ type Key interface {
 	Marshal() ([]byte, error)
 }
 
+// PrivateKey implements a private key.
 type PrivateKey interface {
 	Key
 	Decrypt(ciphertext []byte) ([]byte, error)
 	PublicKey() PublicKey
 }
 
+// PublicKey implements a public key.
 type PublicKey interface {
 	Key
 	Encrypt(msg []byte) ([]byte, error)
 }
 
+// KeyType defines a key type.
 type KeyType int
 
 func (t KeyType) String() string {
@@ -49,17 +51,20 @@ func (t KeyType) String() string {
 	}
 }
 
+// Supported key types.
 const (
-	KeyRSAPrivateKey KeyType = 0
-	KeyRSAPublicKey          = 1
+	KeyRSAPrivateKey KeyType = iota
+	KeyRSAPublicKey
 )
 
+// KeyData implements a keypair.
 type KeyData struct {
 	Name string
 	Type KeyType
 	Data []byte
 }
 
+// Unmarshal decodes key from the data.
 func Unmarshal(data []byte) (Key, error) {
 	keyData := new(KeyData)
 	if err := encoding.Unmarshal(bytes.NewReader(data), keyData); err != nil {
@@ -74,10 +79,11 @@ func Unmarshal(data []byte) (Key, error) {
 		return UnmarshalRSAPublicKey(keyData)
 
 	default:
-		return nil, fmt.Errorf("Invalid key type %s", keyData.Type)
+		return nil, fmt.Errorf("invalid key type %s", keyData.Type)
 	}
 }
 
+// UnmarshalPrivateKey decodes private key from the data.
 func UnmarshalPrivateKey(data []byte) (PrivateKey, error) {
 	key, err := Unmarshal(data)
 	if err != nil {
@@ -85,11 +91,12 @@ func UnmarshalPrivateKey(data []byte) (PrivateKey, error) {
 	}
 	private, ok := key.(PrivateKey)
 	if !ok {
-		return nil, fmt.Errorf("Invalid private key: %T", key)
+		return nil, fmt.Errorf("invalid private key: %T", key)
 	}
 	return private, nil
 }
 
+// UnmarshalPublicKey decodes public key from the data.
 func UnmarshalPublicKey(data []byte) (PublicKey, error) {
 	key, err := Unmarshal(data)
 	if err != nil {
@@ -97,7 +104,7 @@ func UnmarshalPublicKey(data []byte) (PublicKey, error) {
 	}
 	private, ok := key.(PublicKey)
 	if !ok {
-		return nil, fmt.Errorf("Invalid public key: %T", key)
+		return nil, fmt.Errorf("invalid public key: %T", key)
 	}
 	return private, nil
 }

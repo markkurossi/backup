@@ -1,7 +1,5 @@
 //
-// key_rsa.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -104,6 +102,7 @@ func keyID(key *rsa.PublicKey) string {
 	return fmt.Sprintf("sha256:%x", sum[:])
 }
 
+// NewRSAKey creates a new RSA keypair.
 func NewRSAKey(name string, bits int) (PrivateKey, error) {
 	key, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
@@ -115,6 +114,7 @@ func NewRSAKey(name string, bits int) (PrivateKey, error) {
 	}, nil
 }
 
+// UnmarshalRSAPrivateKey decodes RSA private key from the data.
 func UnmarshalRSAPrivateKey(data *KeyData) (PrivateKey, error) {
 	key, err := x509.ParsePKCS1PrivateKey(data.Data)
 	if err != nil {
@@ -127,6 +127,7 @@ func UnmarshalRSAPrivateKey(data *KeyData) (PrivateKey, error) {
 	}, nil
 }
 
+// UnmarshalRSAPublicKey decodes RSA public key from the data.
 func UnmarshalRSAPublicKey(data *KeyData) (PublicKey, error) {
 	key, err := x509.ParsePKCS1PublicKey(data.Data)
 	if err != nil {

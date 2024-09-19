@@ -1,7 +1,5 @@
 //
-// server.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -13,10 +11,12 @@ import (
 	"net"
 )
 
+// Server implements an agent server.
 type Server struct {
 	listener net.Listener
 }
 
+// Accept accepts a new client connection.
 func (s *Server) Accept() (*Connection, error) {
 	conn, err := s.listener.Accept()
 	if err != nil {
@@ -32,17 +32,20 @@ func (s *Server) Accept() (*Connection, error) {
 	return c, nil
 }
 
+// NewServer creates a new agent server.
 func NewServer(listener net.Listener) *Server {
 	return &Server{
 		listener: listener,
 	}
 }
 
+// Connection implements a client connection.
 type Connection struct {
 	conn net.Conn
 	C    chan Msg
 }
 
+// SendOK sends to success message to the connection.
 func (c *Connection) SendOK() error {
 	return SendMessage(c.conn, &MsgOK{
 		MsgHdr: MsgHdr{
@@ -51,6 +54,7 @@ func (c *Connection) SendOK() error {
 	})
 }
 
+// SendError sends the error message msg to the connection.
 func (c *Connection) SendError(msg string) error {
 	return SendMessage(c.conn, &MsgError{
 		MsgHdr: MsgHdr{
@@ -60,6 +64,7 @@ func (c *Connection) SendError(msg string) error {
 	})
 }
 
+// SendKeys sends the identity keys to the connection.
 func (c *Connection) SendKeys(keys []KeyInfo) error {
 	return SendMessage(c.conn, &MsgKeys{
 		MsgHdr: MsgHdr{
@@ -69,6 +74,7 @@ func (c *Connection) SendKeys(keys []KeyInfo) error {
 	})
 }
 
+// SendDecrypted sends decrypted data to the connection.
 func (c *Connection) SendDecrypted(data []byte) error {
 	return SendMessage(c.conn, &MsgDecrypted{
 		MsgHdr: MsgHdr{

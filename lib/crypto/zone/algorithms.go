@@ -1,7 +1,5 @@
 //
-// algorithms.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -12,6 +10,7 @@ import (
 	"fmt"
 )
 
+// Suite defines an encryption suite.
 type Suite byte
 
 func (s Suite) String() string {
@@ -22,6 +21,7 @@ func (s Suite) String() string {
 	return fmt.Sprintf("{Suite %d}", s)
 }
 
+// IDHashKeyLen returns the ID hash key length.
 func (s Suite) IDHashKeyLen() int {
 	len, ok := suiteIDHashKeyLengths[s]
 	if !ok {
@@ -30,6 +30,7 @@ func (s Suite) IDHashKeyLen() int {
 	return len
 }
 
+// CipherKeyLen returns the cipher key length.
 func (s Suite) CipherKeyLen() int {
 	len, ok := suiteCipherKeyLengths[s]
 	if !ok {
@@ -38,6 +39,7 @@ func (s Suite) CipherKeyLen() int {
 	return len
 }
 
+// HMACKeyLen returns the HMAC key length.
 func (s Suite) HMACKeyLen() int {
 	len, ok := suiteHMACKeyLengths[s]
 	if !ok {
@@ -46,11 +48,14 @@ func (s Suite) HMACKeyLen() int {
 	return len
 }
 
+// KeyLen returns the cipher suite key length.
 func (s Suite) KeyLen() int {
 	return s.IDHashKeyLen() + s.CipherKeyLen() + s.HMACKeyLen()
 }
 
 const (
+	// AES256CBCHMACSHA256 defines the AES256-CBC HMAC-SHA256
+	// encryption suite.
 	AES256CBCHMACSHA256 Suite = 0
 )
 

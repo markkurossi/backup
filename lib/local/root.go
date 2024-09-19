@@ -1,7 +1,5 @@
 //
-// root.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,19 +13,23 @@ import (
 )
 
 const (
+	// BackupDir defines the name of the backup directory.
 	BackupDir = ".backup"
 )
 
+// Root implements a storage root.
 type Root struct {
 	Root string
 	Meta string
 }
 
+// Mkdir creates a directory into the storage root.
 func (root *Root) Mkdir(dir string) error {
 	d := fmt.Sprintf("%s/%s", root.Meta, dir)
 	return os.MkdirAll(d, 0755)
 }
 
+// Exists tests if the key exists in the namespace.
 func (root *Root) Exists(namespace, key string) (bool, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	path := fmt.Sprintf("%s/%s", dir, key)
@@ -42,18 +44,21 @@ func (root *Root) Exists(namespace, key string) (bool, error) {
 	return true, nil
 }
 
+// Get gets the value of the key in the namespace.
 func (root *Root) Get(namespace, key string) ([]byte, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	path := fmt.Sprintf("%s/%s", dir, key)
 	return ioutil.ReadFile(path)
 }
 
+// Set sets the key-value pair to the namespace.
 func (root *Root) Set(namespace, key string, value []byte) error {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	path := fmt.Sprintf("%s/%s", dir, key)
 	return ioutil.WriteFile(path, value, 0644)
 }
 
+// GetKeys gets all keys of the namespace.
 func (root *Root) GetKeys(namespace string) ([]string, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	files, err := ioutil.ReadDir(dir)
@@ -70,6 +75,7 @@ func (root *Root) GetKeys(namespace string) ([]string, error) {
 	return keys, nil
 }
 
+// GetAll get all items from the namespace.
 func (root *Root) GetAll(namespace string) (map[string][]byte, error) {
 	dir := fmt.Sprintf("%s/%s", root.Meta, namespace)
 	files, err := ioutil.ReadDir(dir)
@@ -94,6 +100,7 @@ func (root *Root) GetAll(namespace string) (map[string][]byte, error) {
 	return kv, nil
 }
 
+// InitRoot initializes a backup to the directory path.
 func InitRoot(path string) (*Root, error) {
 	root := newRoot(path)
 
@@ -102,12 +109,12 @@ func InitRoot(path string) (*Root, error) {
 		return nil, err
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("Root directory '%s' is not directory", path)
+		return nil, fmt.Errorf("root directory '%s' is not directory", path)
 	}
 	// Is the root already initialized?
 	_, err = os.Stat(root.Meta)
 	if err == nil {
-		return nil, fmt.Errorf("Root directory '%s' already initialized", path)
+		return nil, fmt.Errorf("root directory '%s' already initialized", path)
 	}
 
 	err = os.Mkdir(root.Meta, 0755)
@@ -118,12 +125,13 @@ func InitRoot(path string) (*Root, error) {
 	return root, nil
 }
 
+// OpenRoot opens a backup from the root path.
 func OpenRoot(path string) (*Root, error) {
 	root := newRoot(path)
 
 	_, err := os.Stat(root.Meta)
 	if err != nil {
-		return nil, fmt.Errorf("Could not access root directory: %s", err)
+		return nil, fmt.Errorf("could not access root directory: %s", err)
 	}
 
 	return root, nil

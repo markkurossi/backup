@@ -1,7 +1,5 @@
 //
-// directory.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,27 +13,33 @@ import (
 	"github.com/markkurossi/backup/lib/storage"
 )
 
+// Directory implements directory objects.
 type Directory struct {
 	ElementHeader
 	Entries []DirectoryEntry
 }
 
+// Serialize implements Element.Serialize.
 func (d *Directory) Serialize() ([]byte, error) {
 	return encoding.Marshal(d)
 }
 
+// IsDir implements Element.IsDir.
 func (d *Directory) IsDir() bool {
 	return true
 }
 
+// Directory implements Element.Directory.
 func (d *Directory) Directory() *Directory {
 	return d
 }
 
+// File implements Element.File.
 func (d *Directory) File() File {
 	panic("Directory can't be converted to File")
 }
 
+// Add adds an entry to the directory.
 func (d *Directory) Add(name string, mode os.FileMode, modTime int64,
 	entry storage.ID) {
 	d.Entries = append(d.Entries, DirectoryEntry{
@@ -46,6 +50,7 @@ func (d *Directory) Add(name string, mode os.FileMode, modTime int64,
 	})
 }
 
+// NewDirectory creates a new directory object.
 func NewDirectory() *Directory {
 	return &Directory{
 		ElementHeader: ElementHeader{
@@ -55,6 +60,7 @@ func NewDirectory() *Directory {
 	}
 }
 
+// DirectoryEntry implements a directory entry.
 type DirectoryEntry struct {
 	Name    string
 	Mode    os.FileMode

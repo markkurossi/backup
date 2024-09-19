@@ -1,19 +1,21 @@
 //
-// reader.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
 
 package persistence
 
+// Flags define flags for persistence operations.
 type Flags uint
 
 const (
+	// NoCache forces reading from the storage bypassing any cached
+	// content.
 	NoCache Flags = 1 << iota
 )
 
+// Reader defines persistence reader interface.
 type Reader interface {
 	// Exists tests if the specified key exists in the namespace.
 	Exists(namespace, key string) (bool, error)

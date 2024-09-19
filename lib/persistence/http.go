@@ -1,7 +1,5 @@
 //
-// http.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,11 +13,13 @@ import (
 	"net/http"
 )
 
+// HTTP implements HTTP presistence storage accessor.
 type HTTP struct {
 	root   string
 	client *http.Client
 }
 
+// NewHTTP creates a new HTTP persistence storage accessor.
 func NewHTTP(root string) (*HTTP, error) {
 	return &HTTP{
 		root:   root,
@@ -27,6 +27,7 @@ func NewHTTP(root string) (*HTTP, error) {
 	}, nil
 }
 
+// Exists implements Reader.Exists.
 func (h *HTTP) Exists(namespace, key string) (bool, error) {
 	req, err := http.NewRequest("HEAD", h.makeURL(namespace, key), nil)
 	if err != nil {
@@ -42,6 +43,7 @@ func (h *HTTP) Exists(namespace, key string) (bool, error) {
 	return resp.StatusCode/100 == 2, nil
 }
 
+// Get implements Reader.Get.
 func (h *HTTP) Get(namespace, key string, flags Flags) ([]byte, error) {
 	req, err := http.NewRequest("GET", h.makeURL(namespace, key), nil)
 	if err != nil {
@@ -58,10 +60,12 @@ func (h *HTTP) Get(namespace, key string, flags Flags) ([]byte, error) {
 	return ioutil.ReadAll(resp.Body)
 }
 
+// GetAll implements Reader.GetAll.
 func (h *HTTP) GetAll(namespace string) (map[string][]byte, error) {
 	return nil, errors.New("GetAll not supported for HTTP")
 }
 
+// Set implements Writer.Set.
 func (h *HTTP) Set(namespace, key string, data []byte) error {
 	return errors.New("Set not supported for HTTP")
 }

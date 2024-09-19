@@ -1,7 +1,5 @@
 //
-// file.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -12,6 +10,7 @@ import (
 	"io"
 )
 
+// File implements interface for files.
 type File interface {
 	Size() int64
 	Reader() io.Reader

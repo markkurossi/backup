@@ -1,7 +1,5 @@
 //
-// storage.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -21,25 +19,30 @@ import (
 	"github.com/markkurossi/backup/lib/encoding"
 )
 
+// NewStorage creates a new storage for the user.
 func NewStorage(user *user.User) *Storage {
 	return &Storage{
 		Dir: fmt.Sprintf("%s/.backup.d/identities", user.HomeDir),
 	}
 }
 
+// Storage implements an identity storage.
 type Storage struct {
 	Dir string
 }
 
+// Open opens the storage.
 func (s *Storage) Open() error {
 	return os.MkdirAll(s.Dir, 0700)
 }
 
+// KeyInfo provides information about an identity key.
 type KeyInfo struct {
 	ID   string
 	Name string
 }
 
+// List lists all identity keys.
 func (s *Storage) List() ([]KeyInfo, error) {
 	info, err := ioutil.ReadDir(s.Dir)
 	if err != nil {
@@ -70,6 +73,7 @@ func (s *Storage) List() ([]KeyInfo, error) {
 	return keys, nil
 }
 
+// Load loads the key id that is encrypted with the passphrase.
 func (s *Storage) Load(id string, passphrase []byte) (Key, error) {
 	encrypted, err := s.loadKeyData(id)
 	if err != nil {
@@ -86,6 +90,7 @@ func (s *Storage) loadKeyData(id string) ([]byte, error) {
 	return ioutil.ReadFile(fmt.Sprintf("%s/%s", s.Dir, id))
 }
 
+// Save saves they key encrypted with the passphrase.
 func (s *Storage) Save(key Key, passphrase []byte) error {
 	data, err := key.Marshal()
 	if err != nil {

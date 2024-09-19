@@ -1,7 +1,5 @@
 //
-// zone.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -37,6 +35,7 @@ const (
 	rootDistance = 4096
 )
 
+// Zone implements an backup zone.
 type Zone struct {
 	Name        string
 	Persistence persistence.Accessor
@@ -62,6 +61,7 @@ func (zone *Zone) objectNames(id storage.ID) (string, string) {
 	return ns, key
 }
 
+// AddIdentity adds identity key for the zone.
 func (zone *Zone) AddIdentity(key identity.PublicKey) error {
 	encrypted, err := key.Encrypt(zone.secret)
 	if err != nil {
@@ -115,7 +115,7 @@ func (zone *Zone) Write(data []byte) (id storage.ID, err error) {
 
 func (zone *Zone) init(secret []byte, suite Suite) error {
 	if len(secret) != suite.KeyLen() {
-		return fmt.Errorf("Invalid zone key length: %d vs %d", len(secret),
+		return fmt.Errorf("invalid zone key length: %d vs %d", len(secret),
 			zone.suite.KeyLen())
 	}
 	zone.secret = secret
@@ -137,12 +137,13 @@ func (zone *Zone) init(secret []byte, suite Suite) error {
 		zone.hmac = hmac.New(sha256.New, secret[split2:])
 
 	default:
-		return fmt.Errorf("Unsupported suite: %s", suite)
+		return fmt.Errorf("unsupported suite: %s", suite)
 	}
 
 	return nil
 }
 
+// SetRootPointer sets the root pointer of the zone to id.
 func (zone *Zone) SetRootPointer(id storage.ID) error {
 	pointer := &RootPointer{
 		Version:   1,
@@ -230,7 +231,7 @@ func (zone *Zone) getHead() error {
 	}
 	head, ok := element.(*tree.Snapshot)
 	if !ok {
-		return fmt.Errorf("Root is not a snapshot (%T)", element)
+		return fmt.Errorf("root is not a snapshot (%T)", element)
 	}
 
 	zone.Head = head
@@ -305,7 +306,7 @@ func (zone *Zone) bruteForceRootPointer() error {
 	}
 
 	if best == nil {
-		return fmt.Errorf("No root pointer found from object store")
+		return fmt.Errorf("no root pointer found from object store")
 	}
 
 	zone.Head = best
@@ -381,11 +382,11 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 	if len(data) <= blockSize+hmacLen {
 		// Zero-length data is impossible because of minimum padding
 		// up to next block size (+1 for padding length).
-		return nil, fmt.Errorf("Encrypted data too short")
+		return nil, fmt.Errorf("encrypted data too short")
 	}
 	if (len(data)-hmacLen)%blockSize != 0 {
 		// Encrypted data not rounded up to block size.
-		return nil, fmt.Errorf("Invalid encrypted data length")
+		return nil, fmt.Errorf("invalid encrypted data length")
 	}
 	split := len(data) - hmacLen
 	encrypted := data[:split]
@@ -406,12 +407,12 @@ func (zone *Zone) decrypt(data []byte) ([]byte, error) {
 
 	padLen := int(toDecrypt[len(toDecrypt)-1])
 	if padLen > len(toDecrypt) {
-		return nil, fmt.Errorf("Invalid padding")
+		return nil, fmt.Errorf("invalid padding")
 	}
 
 	decrypted := toDecrypt[:len(toDecrypt)-padLen]
 	if len(decrypted) == 0 {
-		return nil, fmt.Errorf("Truncated data")
+		return nil, fmt.Errorf("truncated data")
 	}
 
 	// Was the data compressed?
@@ -436,6 +437,7 @@ func newZone(name string, persistence persistence.Accessor) *Zone {
 	}
 }
 
+// Create creates the zone name to the persistence.
 func Create(persistence persistence.Accessor, name string) (*Zone, error) {
 	secret := make([]byte, suite.KeyLen())
 	if _, err := io.ReadFull(rand.Reader, secret); err != nil {
@@ -450,6 +452,7 @@ func Create(persistence persistence.Accessor, name string) (*Zone, error) {
 	return zone, nil
 }
 
+// Open opens the zone name from the persistence.
 func Open(persistence persistence.Accessor, name string,
 	keys []identity.PrivateKey) (*Zone, error) {
 
@@ -479,5 +482,5 @@ func Open(persistence persistence.Accessor, name string,
 		return zone, nil
 	}
 
-	return nil, fmt.Errorf("No key to open zone '%s'", name)
+	return nil, fmt.Errorf("no key to open zone '%s'", name)
 }

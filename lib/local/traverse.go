@@ -1,7 +1,5 @@
 //
-// traverse.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -19,6 +17,7 @@ import (
 	"github.com/markkurossi/backup/lib/tree"
 )
 
+// SpecialMask defines the file modes that are ignored in traverse.
 const SpecialMask = os.ModeSymlink | os.ModeDevice | os.ModeNamedPipe |
 	os.ModeSocket | os.ModeCharDevice
 
@@ -31,6 +30,8 @@ var ignoreSuffixes = []string{
 	"~",
 }
 
+// Traverse traverses the directory tree root and stores it into
+// writer. The function returns the root element ID.
 func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 	fileInfo, err := os.Lstat(root)
 	if err != nil {
@@ -53,6 +54,7 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 		}
 	}
 
+	// Directory.
 	if (mode & os.ModeDir) != 0 {
 		files, err := ioutil.ReadDir(root)
 		if err != nil {
@@ -85,48 +87,51 @@ func Traverse(root string, writer storage.Writer) (id storage.ID, err error) {
 			return id, err
 		}
 		return writer.Write(data)
-	} else {
-		if fileInfo.Size() < 1024*1024 {
-			data, err := ioutil.ReadFile(root)
-			if err != nil {
-				return id, err
-			}
-			file := tree.NewSimpleFile(data)
-			data, err = file.Serialize()
-			if err != nil {
-				return id, err
-			}
-			return writer.Write(data)
-		} else {
-			file, err := os.Open(root)
-			if err != nil {
-				return id, err
-			}
-			defer file.Close()
-
-			buf := make([]byte, 1024*1024)
-			cf := tree.NewChunkedFile(fileInfo.Size())
-
-			for {
-				read, err := file.Read(buf)
-				if read == 0 {
-					if err != io.EOF {
-						return id, err
-					}
-					break
-				}
-				id, err = writer.Write(buf[:read])
-				if err != nil {
-					return id, err
-				}
-				cf.Add(int64(read), id)
-			}
-
-			data, err := cf.Serialize()
-			if err != nil {
-				return id, err
-			}
-			return writer.Write(data)
-		}
 	}
+
+	// Small files as simple files.
+	if fileInfo.Size() < 1024*1024 {
+		data, err := ioutil.ReadFile(root)
+		if err != nil {
+			return id, err
+		}
+		file := tree.NewSimpleFile(data)
+		data, err = file.Serialize()
+		if err != nil {
+			return id, err
+		}
+		return writer.Write(data)
+	}
+
+	// Large files as compound files.
+
+	file, err := os.Open(root)
+	if err != nil {
+		return id, err
+	}
+	defer file.Close()
+
+	buf := make([]byte, 1024*1024)
+	cf := tree.NewChunkedFile(fileInfo.Size())
+
+	for {
+		read, err := file.Read(buf)
+		if read == 0 {
+			if err != io.EOF {
+				return id, err
+			}
+			break
+		}
+		id, err = writer.Write(buf[:read])
+		if err != nil {
+			return id, err
+		}
+		cf.Add(int64(read), id)
+	}
+
+	data, err := cf.Serialize()
+	if err != nil {
+		return id, err
+	}
+	return writer.Write(data)
 }

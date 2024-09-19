@@ -1,7 +1,5 @@
 //
-// snapshot.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -15,6 +13,7 @@ import (
 	"github.com/markkurossi/backup/lib/storage"
 )
 
+// Snapshot implements snapshot objects.
 type Snapshot struct {
 	ElementHeader
 	Timestamp int64
@@ -27,22 +26,27 @@ func (s *Snapshot) String() string {
 	return fmt.Sprintf("Snapshot %s (%s)", s.Root, s.Size)
 }
 
+// Serialize implements Element.Serialize.
 func (s *Snapshot) Serialize() ([]byte, error) {
 	return encoding.Marshal(s)
 }
 
+// IsDir implements Element.IsDir.
 func (s *Snapshot) IsDir() bool {
 	return false
 }
 
+// Directory implements Element.Directory.
 func (s *Snapshot) Directory() *Directory {
 	panic("Snapshot can't be converted to Directory")
 }
 
+// File implements Element.File.
 func (s *Snapshot) File() File {
 	panic("Snapshot can't be converted to File")
 }
 
+// NewSnapshot creates a new snapshot object.
 func NewSnapshot() *Snapshot {
 	return &Snapshot{
 		ElementHeader: ElementHeader{

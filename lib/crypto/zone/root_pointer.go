@@ -1,7 +1,5 @@
 //
-// root_pointer.go
-//
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // All rights reserved.
 //
@@ -12,6 +10,7 @@ import (
 	"github.com/markkurossi/backup/lib/storage"
 )
 
+// RootPointer implements zone root pointer.
 type RootPointer struct {
 	Version   byte
 	Timestamp int64
